@@ -5,12 +5,18 @@ import Layout from '@/layout/index.vue'
 const routes = [
     {
         path: '/',
-        redirect: '/home',
+        redirect: '/login',
     },
     {
         path: '/login',
         component: () => import('@/views/Login/index.vue'),
         meta: { title: '登录' },
+        hidden: true
+    },
+    {
+        path: '/test',
+        component: () => import('@/views/Test.vue'),
+        meta: { title: '测试' },
         hidden: true
     },
     {

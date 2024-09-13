@@ -64,7 +64,7 @@ const traverseRoutes = (routes) => {
 
 onMounted(() => {
     router.options.routes.forEach((route) => {
-        if (route.path != "/" && route.path != "/login") {
+        if (route.path != "/" && route.path != "/login" && route.path != "/test") {
             if (route.children.length == 1 && !route.children[0].hasOwnProperty("name")) {
                 menuItems.value.push({
                     name: route.meta.title,
