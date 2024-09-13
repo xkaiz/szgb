@@ -97,7 +97,6 @@ const getLogin = () => {
 const handleLogin = () => {
     // 将用户密码进行MD5加密，以确保传输过程中的安全性
     loginForm.value.password = md5(loginForm.value.password)
-
     // 验证表单内容，如果验证通过，则调用登录接口
     loginFormRef.value.validate(valid => {
         // 如果表单验证通过

@@ -1,25 +1,25 @@
 <template>
-    <div class="container">
-        <el-container>
-            <el-aside width="20%">
-                <el-tree :data="treeData" />
-            </el-aside>
-            <el-divider direction="vertical" />
-            <el-main>
-                <el-table :data="tableData" style="width: 100%">
-                    <el-table-column prop="date" label="Date" width="180" />
-                    <el-table-column prop="name" label="Name" width="180" />
-                    <el-table-column prop="address" label="Address" />
-                </el-table>
-            </el-main>
-        </el-container>
-    </div>
+    <el-container>
+        <el-aside width="20%">
+            <el-tree :data="treeData" />
+        </el-aside>
+        <el-divider direction="vertical" />
+        <el-main>
+            <el-table :data="tableData" style="width: 100%">
+                <el-table-column prop="date" label="Date" width="180" />
+                <el-table-column prop="name" label="Name" width="180" />
+                <el-table-column prop="address" label="Address" />
+            </el-table>
+        </el-main>
+    </el-container>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import useStore from '@/store/index';
 const store = useStore();
+
+import userAPI from '@/api/User'
 
 const treeData = ref([])
 const tableData = [
@@ -44,8 +44,17 @@ const tableData = [
         address: 'No. 189, Grove St, Los Angeles',
     },
 ]
+
+const user = ref({
+    department: {
+        id: 1,
+    }
+})
 onMounted(() => {
     treeData.value = buildTree(store.departmentList)
+    userAPI.getUserList(user.value).then(res => {
+        console.log(res)
+    })
 })
 
 /**
@@ -85,8 +94,4 @@ const buildTree = (data) => {
 };
 </script>
 
-<style scoped>
-.container {
-    padding: 1%;
-}
-</style>
+<style scoped></style>

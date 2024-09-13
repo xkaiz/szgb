@@ -1,4 +1,5 @@
 import request from '@/utils/Request'
+import { List } from 'echarts'
 
 export default {
     getLogin(data) {
@@ -8,4 +9,12 @@ export default {
             data: data
         })
     },
+
+    getUserList(data){
+        return request({
+            url: '/sys/user/list',
+            method: 'get',
+            data: data
+        })
+    }
 }
