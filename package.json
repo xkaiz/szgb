@@ -13,8 +13,11 @@
     "axios": "^1.6.2",
     "echarts": "^5.4.3",
     "element-plus": "^2.4.3",
+    "pinia": "^2.2.2",
+    "pinia-plugin-persistedstate": "^4.0.1",
     "vue": "^3.3.11",
     "vue-router": "^4.2.5",
+    "vue3-cookies": "^1.0.6",
     "xlsx": "^0.16.8"
   },
   "devDependencies": {

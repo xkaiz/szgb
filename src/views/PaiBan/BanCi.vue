@@ -1,5 +1,5 @@
 <template>
     <div>
-        <h1>排班管理</h1>
+        <h1>班次管理</h1>
     </div>
 </template>

@@ -1,39 +1,14 @@
 <template>
-    <el-menu :default-active="defaultActive" mode="horizontal" router>
+    <div class="navbar">
         <el-image class="logo"
-            src="https://tse2-mm.cn.bing.net/th/id/OIP-C.hWv412P3NkAPVB5gmUMzRQAAAA?pid=ImgDet&rs=1"></el-image>
-        <template v-for="menuItem in menuItems">
-            <el-menu-item :key="menuItem.name" :index="menuItem.path" v-if="menuItem.child.length == 0">
-                {{ menuItem.name }}
-            </el-menu-item>
-            <el-sub-menu :key="menuItem.name" :index="menuItem.path" v-if="menuItem.child.length > 0">
-                <template #title>{{ menuItem.name }}</template>
-                <div v-for="lv1Item in menuItem.child">
-                    <el-menu-item :key="lv1Item.name" :index="lv1Item.path" v-if="lv1Item.child.length == 0">
-                        {{ lv1Item.name }}
-                    </el-menu-item>
-                    <el-sub-menu :key="lv1Item.name" :index="lv1Item.path" v-if="lv1Item.child.length > 0">
-                        <template #title>{{ lv1Item.name }}</template>
-                        <div v-for="lv2Item in lv1Item.child">
-                            <el-menu-item :key="lv2Item.name" :index="lv2Item.path" v-if="lv2Item.child.length == 0">
-                                {{ lv2Item.name }}
-                            </el-menu-item>
-                            <el-sub-menu :key="lv2Item.name" :index="lv2Item.path" v-if="lv2Item.child.length > 0">
-                                <template #title>{{ lv2Item.name }}</template>
-                                <div v-for="lv3Item in lv2Item.child">
-                                    <el-menu-item :key="lv3Item.name" :index="lv3Item.path">
-                                        {{ lv3Item.name }}
-                                    </el-menu-item>
-                                </div>
-                            </el-sub-menu>
-                        </div>
-                    </el-sub-menu>
-                </div>
-            </el-sub-menu>
-        </template>
-    </el-menu>
+            src="https://tse1-mm.cn.bing.net/th/id/OIP-C.G33rtU6Ho372IeuZldZH0QHaBk?rs=1&pid=ImgDetMain"></el-image>
+
+        <div class="user">
+            <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" />
+        </div>
+    </div>
 </template>
-  
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -66,7 +41,7 @@ const traverseRoutes = (routes) => {
 
 onMounted(() => {
     router.options.routes.forEach((route) => {
-        if (route.path != "/") {
+        if (route.path != "/" && route.path != "/login") {
             if (route.children.length == 1 && !route.children[0].hasOwnProperty("name")) {
                 menuItems.value.push({
                     name: route.meta.title,
@@ -83,14 +58,24 @@ onMounted(() => {
         }
 
     })
-    console.log(menuItems.value);
 })
 </script>
 
 <style scoped>
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    height: 5%;
+    border: 1px solid #dcdfe6;
+}
+
 .logo {
     margin-left: 1vw;
     margin-right: 1vw;
 }
+
+.user {
+    text-align: right;
+    margin-right: 1vw;
+}
 </style>
-  
