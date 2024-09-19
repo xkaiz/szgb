@@ -1,10 +1,16 @@
-import request from '@/utils/Request'
+import request from "@/utils/Request";
 
 export default {
     test() {
+        const data = {
+            department: {
+                id: "",
+            },
+        };
         return request({
-            url: '/sys/department/list',
-            method: 'get',
-        })
+            url: "/sys/user/list",
+            method: "post",
+            data: data,
+        });
     },
-}
+};

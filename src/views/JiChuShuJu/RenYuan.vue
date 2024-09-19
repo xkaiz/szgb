@@ -1,94 +1,136 @@
 <template>
-    <el-container>
-        <el-aside width="20%">
-            <el-tree :data="treeData" @node-click="handleNodeClick" />
-        </el-aside>
-        <el-divider direction="vertical" />
-        <el-main>
-            <el-table :data="tableData" style="width: 100%">
-                <el-table-column prop="username" label="用户名" width="180" />
-                <el-table-column prop="name" label="姓名" width="180" />
-                <el-table-column prop="department" label="部门" />
-            </el-table>
-        </el-main>
-    </el-container>
+	<el-container class="container">
+		<el-aside class="tree">
+			<el-tree :data="treeData" @node-click="handleNodeClick" />
+		</el-aside>
+		<el-main class="main">
+			<el-row class="toolbar">
+				<div>
+					<el-button type="primary">新建</el-button>
+					<el-button type="warning" plain>修改</el-button>
+					<el-button type="danger" plain>删除</el-button>
+				</div>
+				<el-button-group>
+					<el-button type="default">导入</el-button>
+					<el-button type="default">导出</el-button>
+					<el-button type="default">刷新</el-button>
+				</el-button-group>
+			</el-row>
+			<el-table class="table" :data="tableData">
+				<el-table-column type="selection" header-align="center" align="center" width="50" />
+				<el-table-column prop="username" label="用户名" show-overflow-tooltip width="180" />
+				<el-table-column prop="name" label="姓名" show-overflow-tooltip width="180" />
+				<el-table-column prop="department" label="部门" show-overflow-tooltip />
+			</el-table>
+			<el-row class="pagination">
+				<el-pagination background layout="total, sizes, prev, pager, next, jumper" v-model:current-page="pageNo"
+					v-model:page-size="pageSize" :total="total" :page-sizes="[10, 20, 50, 100]"
+					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
+			</el-row>
+		</el-main>
+	</el-container>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import useStore from '@/store/index';
+import { ref, onMounted } from "vue";
+
+import useStore from "@/store/index";
 const store = useStore();
 
-import userAPI from '@/api/User'
+import userAPI from "@/api/User";
 
-const treeData = ref([])
-const tableData = ref([])
+const treeData = ref([]);
+const tableData = ref([]);
+const pageNo = ref(1);
+const pageSize = ref(10);
+const total = ref(100);
 
 const user = ref({
-    department: {
-        id: "",
-    }
-})
+	department: {
+		id: "",
+	},
+	page: {
+		pageNo: 1,
+		pageSize: 10
+	}
+});
+
+
 onMounted(() => {
-    treeData.value = buildTree(store.departmentList)
-})
+	if (store.userList.count == undefined) {
+		getUserList();
+	} else {
+		total.value = store.userList.count;
+	}
+	tableData.value = store.userList;
+	treeData.value = store.departmentList;
+});
+
 
 const handleNodeClick = (data) => {
-    tableData.value = []
-    if (data.children.length == 0) {
-        user.value.department.id = data.id
-        getUserList()
-    }
-}
+	if (data.children.length == 0) {
+		user.value.page.pageNo = 1;
+		pageNo.value = 1;
+		user.value.department.id = data.id;
+		getUserList();
+	}
+};
 
 const getUserList = () => {
-    userAPI.getUserList(user.value).then(res => {
-        res.data.data.data.forEach(element => {
-            let item = {
-                username: element.username,
-                name: element.name,
-                department: element.department.name,
-            }
-            tableData.value.push(item)
-        })
-    })
-}
+	userAPI.getUserList(user.value).then((res) => {
+		tableData.value = [];
+		res.data.page.list.forEach((element) => {
+			let item = {
+				username: element.username,
+				name: element.name,
+				department: element.department.name,
+			};
+			tableData.value.push(item);
+		});
+		total.value = res.data.page.count;
+	});
+};
 
-/**
- * 构建树形结构
- * 通过遍历数据数组，将具有层级关系的数据转换为树形结构
- * 
- * @param {Array} data - 一个包含节点信息的数组，每个节点有id和parentId字段
- * @returns {Array} - 返回一个数组，其中包含构建好的树形结构
- */
-const buildTree = (data) => {
-    // 创建一个临时对象，用于存储所有节点的映射关系
-    const map = {};
-    // 创建一个数组，用于存储最终构建好的树的根节点
-    const tree = [];
+const handleSizeChange = (value) => {
+	user.value.page.pageSize = value;
+	getUserList();
+};
 
-    // 第一次遍历数据，为每个节点在map中创建一个映射
-    data.forEach(item => {
-        // 在map中以节点的id为键，存储一个对象，包括该节点的标签和一个空的子节点数组
-        map[item.id] = { label: item.name, id: item.id, children: [] };
-    });
-
-    // 第二次遍历数据，根据parentId将节点添加到对应的父节点的子节点数组中
-    data.forEach(item => {
-        // 如果节点的parentId为null，说明它是根节点，直接添加到树的根节点数组中
-        if (item.parent == null) {
-            tree.push(map[item.id]);
-        } else {
-            // 如果父节点存在，则将当前节点添加到父节点的子节点数组中
-            if (map[item.parent.id]) {
-                map[item.parent.id].children.push(map[item.id]);
-            }
-        }
-    });
-
-    // 返回构建好的树的根节点数组
-    return tree;
+const handleCurrentChange = (value) => {
+	user.value.page.pageNo = value;
+	getUserList();
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+.container {
+	height: calc(100vh - 52px);
+}
+
+.tree {
+	width: 20%;
+	padding: 1%;
+	border: 1px solid #ccc;
+}
+
+.main {
+	height: calc(100vh - 52px);
+	border: 1px solid #ccc;
+}
+
+.toolbar {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 1%;
+}
+
+.table {
+	height: calc(100vh - 200px);
+	margin-bottom: 2%;
+}
+
+.pagination {
+	display: flex;
+	justify-content: right;
+}
+</style>
