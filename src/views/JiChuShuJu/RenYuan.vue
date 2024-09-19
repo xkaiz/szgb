@@ -6,6 +6,17 @@
 				:filter-node-method="filterNode" />
 		</el-aside>
 		<el-main class="main">
+			<el-row class="search">
+				<el-row class="search-item">
+					<el-input v-model="user.username" placeholder="用户名" clearable />
+				</el-row>
+				<el-row class="search-item">
+					<el-input v-model="user.name" placeholder="姓名" clearable />
+				</el-row>
+				<el-button type="primary" @click="search">查询</el-button>
+				<el-button type="primary" @click="clear">清空</el-button>
+
+			</el-row>
 			<el-row class="toolbar">
 				<div>
 					<el-button type="primary">新建</el-button>
@@ -61,6 +72,8 @@ const pageSize = ref(10);
 const total = ref(100);
 
 const user = ref({
+	username: "",
+	name: "",
 	department: {
 		id: "",
 	},
@@ -69,7 +82,6 @@ const user = ref({
 		pageSize: 10
 	}
 });
-
 
 onMounted(() => {
 	if (store.userList.count == undefined) {
@@ -80,6 +92,25 @@ onMounted(() => {
 	tableData.value = store.userList;
 	treeData.value = store.departmentList;
 });
+
+const search = () => {
+	getUserList();
+}
+
+const clear = () => {
+	user.value = {
+		username: "",
+		name: "",
+		department: {
+			id: "",
+		},
+		page: {
+			pageNo: 1,
+			pageSize: 10
+		}
+	}
+	getUserList();
+}
 
 watch(filterText, (value) => {
 	treeRef.value.filter(value)
@@ -123,6 +154,10 @@ const refreshTable = () => {
 
 const handleSizeChange = (value) => {
 	user.value.page.pageSize = value;
+	if (pageNo.value * value > total.value) {
+		pageNo.value = Math.ceil(total.value / value);
+		user.value.page.pageNo = pageNo.value;
+	}
 	getUserList();
 };
 
@@ -135,6 +170,14 @@ const handleCurrentChange = (value) => {
 <style scoped>
 .container {
 	height: calc(100vh - 52px);
+}
+
+.search {
+	margin-bottom: 1%;
+}
+
+.search-item {
+	margin-right: 1%;
 }
 
 .filter {
@@ -159,7 +202,7 @@ const handleCurrentChange = (value) => {
 }
 
 .table {
-	height: calc(100vh - 200px);
+	height: calc(100vh - 250px);
 	margin-bottom: 2%;
 }
 

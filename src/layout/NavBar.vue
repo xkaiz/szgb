@@ -1,6 +1,7 @@
 <template>
 	<div class="navbar">
-		<el-image class="logo" src="https://tse1-mm.cn.bing.net/th/id/OIP-C.G33rtU6Ho372IeuZldZH0QHaBk?rs=1&pid=ImgDetMain" />
+		<el-image class="logo"
+			src="https://tse1-mm.cn.bing.net/th/id/OIP-C.G33rtU6Ho372IeuZldZH0QHaBk?rs=1&pid=ImgDetMain" />
 		<el-dropdown>
 			<div class="user">
 				{{ store.user.name }}
@@ -18,7 +19,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 import { useRouter } from "vue-router";
 const router = useRouter();
@@ -72,9 +73,16 @@ onMounted(() => {
 });
 
 const logout = () => {
-	store.logout();
-	cookies.remove("token");
-	router.push("/login");
+	//弹窗确认
+	ElMessageBox.confirm("确定要退出登录吗？", "提示", {
+		confirmButtonText: "确定",
+		cancelButtonText: "取消",
+		type: "warning",
+	}).then(() => {
+		store.logout();
+		cookies.remove("token");
+		router.push("/login");
+	});
 };
 </script>
 
