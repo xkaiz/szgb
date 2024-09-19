@@ -33,9 +33,6 @@ const dataInit = () => {
 	Promise.all([
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
-			res.data.page.list.forEach((element) => {
-				element.department = element.department.name;
-			});
 			store.setUserList(res.data.page.list);
 		}),
 		departmentAPI.getDepartmentList(department.value).then((res) => {
@@ -62,7 +59,7 @@ const buildTree = (data) => {
 	// 第一次遍历数据，为每个节点在map中创建一个映射
 	data.forEach((item) => {
 		// 在map中以节点的id为键，存储一个对象，包括该节点的标签和一个空的子节点数组
-		map[item.id] = { label: item.name, id: item.id, children: [] };
+		map[item.id] = { label: item.name, value: item.id, children: [] };
 	});
 
 	// 第二次遍历数据，根据parentId将节点添加到对应的父节点的子节点数组中

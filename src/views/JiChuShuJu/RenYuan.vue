@@ -14,7 +14,7 @@
 					<el-input v-model="user.name" placeholder="姓名" clearable />
 				</el-row>
 				<el-button type="primary" @click="search">查询</el-button>
-				<el-button type="primary" @click="clear">清空</el-button>
+				<el-button type="primary" @click="clear">重置</el-button>
 
 			</el-row>
 			<el-row class="toolbar">
@@ -24,24 +24,21 @@
 					<el-button type="danger" plain>删除</el-button>
 				</div>
 				<el-button-group>
-					<el-button type="default">导入</el-button>
-					<el-button type="default">导出</el-button>
+					<!-- <el-button type="default">导入</el-button>
+					<el-button type="default">导出</el-button> -->
 					<el-button type="default" @click="refreshTable">刷新</el-button>
 				</el-button-group>
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="loading">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
+				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip width="180" />
 				<el-table-column prop="name" label="姓名" show-overflow-tooltip width="180" />
-				<el-table-column prop="department" label="部门" show-overflow-tooltip />
+				<el-table-column prop="department.name" label="部门" show-overflow-tooltip />
 				<el-table-column fixed="right" label="操作" width="120">
-					<template #default>
-						<el-button link type="primary" size="small" @click="">
-							编辑
-						</el-button>
-						<el-button link type="primary" size="small">
-							删除
-						</el-button>
+					<template #default="scope">
+						<el-button link type="primary" size="small" @click="edit(scope.row)">编辑</el-button>
+						<el-button link type="primary" size="small" @click="del(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -52,10 +49,38 @@
 			</el-row>
 		</el-main>
 	</el-container>
+	<el-dialog v-model="dialogVisible" :title="dialogTitle" width="50%" draggable overflow>
+		<el-form :model="form" v-loading="loading">
+			<el-row :gutter="15">
+				<el-col :span="8">
+					<el-form-item label="用户名" prop="username">
+						<el-input v-model="form.username" placeholder="请填写用户名" disabled></el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="8">
+					<el-form-item label="姓名" prop="name">
+						<el-input v-model="form.name" placeholder="请填写姓名"></el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="8">
+					<el-form-item label="部门" prop="department">
+						<el-tree-select v-model="form.department.id" :data="store.departmentList"
+							:render-after-expand="false" check-strictly />
+					</el-form-item>
+				</el-col>
+			</el-row>
+		</el-form>
+		<template #footer>
+			<div class="dialog-footer">
+				<el-button @click="dialogVisible = false">取消</el-button>
+				<el-button type="primary" @click="submit">提交</el-button>
+			</div>
+		</template>
+	</el-dialog>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 
 import useStore from "@/store/index";
 const store = useStore();
@@ -71,6 +96,9 @@ const pageNo = ref(1);
 const pageSize = ref(10);
 const total = ref(100);
 
+const dialogVisible = ref(false);
+const dialogTitle = ref("");
+
 const user = ref({
 	username: "",
 	name: "",
@@ -81,6 +109,15 @@ const user = ref({
 		pageNo: 1,
 		pageSize: 10
 	}
+});
+
+const form = ref({
+	username: "",
+	name: "",
+	department: {
+		id: "",
+	},
+	role: "",
 });
 
 onMounted(() => {
@@ -98,11 +135,12 @@ const search = () => {
 }
 
 const clear = () => {
+	const departmentID = user.value.department.id;
 	user.value = {
 		username: "",
 		name: "",
 		department: {
-			id: "",
+			id: departmentID,
 		},
 		page: {
 			pageNo: 1,
@@ -110,6 +148,28 @@ const clear = () => {
 		}
 	}
 	getUserList();
+}
+
+const edit = (row) => {
+	console.log(row);
+	form.value.username = row.username;
+	form.value.name = row.name;
+	form.value.department = row.department;
+	dialogVisible.value = true;
+	dialogTitle.value = "编辑";
+
+}
+
+const del = (row) => {
+	console.log(row);
+}
+
+const submit = () => {
+	userAPI.save(form.value).then((res) => {
+		ElMessage.success("更新成功");
+		dialogVisible.value = false;
+		getUserList();
+	})
 }
 
 watch(filterText, (value) => {
@@ -135,9 +195,10 @@ const getUserList = () => {
 		tableData.value = [];
 		res.data.page.list.forEach((element) => {
 			let item = {
+				id: element.id,
 				username: element.username,
 				name: element.name,
-				department: element.department.name,
+				department: element.department,
 			};
 			tableData.value.push(item);
 		});
@@ -209,5 +270,9 @@ const handleCurrentChange = (value) => {
 .pagination {
 	display: flex;
 	justify-content: right;
+}
+
+.form-item {
+	margin-right: 1%;
 }
 </style>
