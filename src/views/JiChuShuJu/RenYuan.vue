@@ -29,12 +29,12 @@
 				</el-button-group>
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
-				@selection-change="handleSelectionChange">
+				@selection-change="handleSelectionChange" @sort-change="handleSortChange">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
-				<el-table-column prop="username" label="用户名" show-overflow-tooltip width="180" />
-				<el-table-column prop="name" label="姓名" show-overflow-tooltip width="180" />
-				<el-table-column prop="department.name" label="部门" show-overflow-tooltip />
+				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
+				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+				<el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
 				<el-table-column fixed="right" label="操作" width="120">
 					<template #default="scope">
 						<el-button link type="primary" size="small" @click="edit(scope.row)">编辑</el-button>
@@ -44,7 +44,7 @@
 			</el-table>
 			<el-row class="pagination">
 				<el-pagination background layout="total, sizes, prev, pager, next, jumper" v-model:current-page="pageNo"
-					v-model:page-size="pageSize" :total="total" :page-sizes="[10, 20, 50, 100]"
+					v-model:page-size="pageSize" :total="total" :page-sizes="[20, 40, 60, 80, 100]"
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</el-row>
 		</el-main>
@@ -101,7 +101,7 @@ const tableData = ref([]);
 const userLoading = ref(true);
 const departmentLoading = ref(true);
 const pageNo = ref(1);
-const pageSize = ref(10);
+const pageSize = ref(20);
 const total = ref(0);
 
 const dialogVisible = ref(false);
@@ -123,7 +123,7 @@ const user = ref({
 	},
 	page: {
 		pageNo: 1,
-		pageSize: 10
+		pageSize: 20
 	}
 });
 
@@ -179,7 +179,7 @@ const clear = () => {
 		},
 		page: {
 			pageNo: 1,
-			pageSize: 10
+			pageSize: 20
 		}
 	}
 	getUserList();
@@ -317,6 +317,12 @@ const handleCurrentChange = (value) => {
 const handleSelectionChange = (value) => {
 	deleteButtonDisabled.value = value.length == 0;
 	ids.value = value.map((item) => item.id).join(",");
+}
+
+const handleSortChange = (column, prop, order) => {
+	column.order = column.order.replace(/ending/, "");
+	user.value.page.orderBy = `${column.prop} ${column.order}`;
+	getUserList();
 }
 </script>
 
