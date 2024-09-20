@@ -3,7 +3,7 @@
 		<el-aside class="tree">
 			<el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
 			<el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
-				:filter-node-method="filterNode" />
+				:filter-node-method="filterNode" v-loading="departmentLoading" />
 		</el-aside>
 		<el-main class="main">
 			<el-row class="search">
@@ -20,8 +20,7 @@
 			<el-row class="toolbar">
 				<div>
 					<el-button type="primary">新建</el-button>
-					<el-button type="warning" plain>修改</el-button>
-					<el-button type="danger" plain @click="del">删除</el-button>
+					<el-button type="danger" plain :disabled="deleteButtonDisabled" @click="del">删除</el-button>
 				</div>
 				<el-button-group>
 					<!-- <el-button type="default">导入</el-button>
@@ -29,7 +28,7 @@
 					<el-button type="default" @click="refreshTable">刷新</el-button>
 				</el-button-group>
 			</el-row>
-			<el-table class="table" :data="tableData" stripe v-loading="loading"
+			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
 				@selection-change="handleSelectionChange">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
@@ -51,7 +50,7 @@
 		</el-main>
 	</el-container>
 	<el-dialog v-model="dialogVisible" :title="dialogTitle" width="50%" draggable overflow>
-		<el-form :model="form" v-loading="loading">
+		<el-form :model="form">
 			<el-row :gutter="15">
 				<el-col :span="8">
 					<el-form-item label="用户名" prop="username">
@@ -74,7 +73,9 @@
 		<template #footer>
 			<div class="dialog-footer">
 				<el-button @click="dialogVisible = false">取消</el-button>
-				<el-button type="primary" @click="submit">提交</el-button>
+				<el-button type="primary" @click="submit" :loading="submitButtonLoading">
+					{{ submitButtonText }}
+				</el-button>
 			</div>
 		</template>
 	</el-dialog>
@@ -83,22 +84,33 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 
+import { useCookies } from "vue3-cookies";
+const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
 import userAPI from "@/api/User";
+import departmentAPI from "@/api/Department";
+import { buildTree } from "@/utils/BuildTree";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 const treeRef = ref(null);
 const treeData = ref([]);
 const filterText = ref("");
 const tableData = ref([]);
-const loading = ref(false);
+const userLoading = ref(true);
+const departmentLoading = ref(true);
 const pageNo = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
 
 const dialogVisible = ref(false);
 const dialogTitle = ref("");
+
+const submitButtonLoading = ref(false);
+const submitButtonText = ref("提交");
+
+const deleteButtonDisabled = ref(true);
 
 const ids = ref("");
 
@@ -114,6 +126,10 @@ const user = ref({
 	}
 });
 
+const department = ref({
+	name: "厦门轨道集团",
+});
+
 const form = ref({
 	id: "",
 	username: "",
@@ -125,13 +141,27 @@ const form = ref({
 });
 
 onMounted(() => {
-	if (store.userList.count == undefined) {
-		getUserList();
-	} else {
-		total.value = store.userList.count;
+	const token = cookies.get("token");
+	if (token == null || token == "") {
+		window.location.href = "/login?path=RenYuan";
+		return
 	}
-	tableData.value = store.userList;
-	treeData.value = store.departmentList;
+	Promise.all([
+		userAPI.getUserList(user.value).then((res) => {
+			res.data.page.list.count = res.data.page.count;
+			store.setUserList(res.data.page.list);
+			userLoading.value = false;
+		}),
+		departmentAPI.getDepartmentList(department.value).then((res) => {
+			store.setDepartmentList(buildTree(res.data.page.list));
+			departmentLoading.value = false;
+		}),
+	]).then(() => {
+		total.value = store.userList.count;
+		tableData.value = store.userList;
+		treeData.value = store.departmentList;
+	});
+
 });
 
 const search = () => {
@@ -166,26 +196,31 @@ const edit = (row) => {
 }
 
 const del = (row) => {
-	if (row.id != undefined) {
-		ids.value = row.id;
-	}
-	if (ids.value == "") {
-		return
-	}
-	userAPI.delete(ids.value).then((res) => {
-		if (res.status == 200) {
+	ElMessageBox.confirm("确定删除吗？", "提示", {
+		confirmButtonText: "确定",
+		cancelButtonText: "取消",
+		type: "warning",
+	}).then(() => {
+		if (row.id != undefined) {
+			ids.value = row.id;
+		}
+		if (ids.value == "") {
+			return
+		}
+		userAPI.delete(ids.value).then((res) => {
 			ElMessage.success("删除成功");
 			getUserList();
-		} else {
+		}).catch(() => {
 			ElMessage.error("删除失败");
-			console.log(res.data);
-		}
+		});
 	}).catch(() => {
-		ElMessage.error("删除失败");
 	});
+
 }
 
 const submit = () => {
+	submitButtonLoading.value = true;
+	submitButtonText.value = "提交中";
 	userAPI.save(form.value).then((res) => {
 		ElMessage.success("更新成功");
 		dialogVisible.value = false;
@@ -193,6 +228,8 @@ const submit = () => {
 	}).catch(() => {
 		ElMessage.error("更新失败");
 	});
+	submitButtonLoading.value = false;
+	submitButtonText.value = "提交";
 }
 
 watch(filterText, (value) => {
@@ -213,7 +250,7 @@ const handleNodeClick = (data) => {
 };
 
 const getUserList = () => {
-	loading.value = true;
+	userLoading.value = true;
 	userAPI.getUserList(user.value).then((res) => {
 		tableData.value = [];
 		res.data.page.list.forEach((element) => {
@@ -226,7 +263,7 @@ const getUserList = () => {
 			tableData.value.push(item);
 		});
 		total.value = res.data.page.count;
-		loading.value = false;
+		userLoading.value = false;
 	});
 };
 
@@ -251,6 +288,7 @@ const handleCurrentChange = (value) => {
 };
 
 const handleSelectionChange = (value) => {
+	deleteButtonDisabled.value = value.length == 0;
 	ids.value = value.map((item) => item.id).join(",");
 }
 </script>

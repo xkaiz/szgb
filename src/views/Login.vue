@@ -43,7 +43,11 @@ const rules = {
 
 const loginButtonLoading = ref(false);
 const loginButtonText = ref("登录");
+
+const path = ref("home");
 onMounted(() => {
+    const url = new URL(window.location.href);
+    path.value = url.searchParams.get('path') == null ? "home" : url.searchParams.get('path');
     autoLogin();
 });
 
@@ -59,7 +63,7 @@ const getLogin = () => {
     userAPI.getLogin(loginForm.value).then((res) => {
         cookies.set("token", res.data.sysUser.token);
         store.setUser(res.data.sysUser);
-        router.push("/home?token=" + res.data.sysUser.token);
+        router.push("/" + path.value);
     }).catch(() => {
         loginButtonLoading.value = false;
         loginButtonText.value = "登录";
