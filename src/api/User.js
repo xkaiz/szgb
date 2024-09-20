@@ -27,4 +27,13 @@ export default {
 			data: data,
 		});
 	},
+
+	//删除用户
+	delete(ids) {
+		return request({
+			url: "/sys/user/delete",
+			method: "delete",
+			params: { ids: ids },
+		});
+	},
 };

@@ -15,15 +15,27 @@ service.interceptors.request.use((request) => {
 	}
 	return request;
 });
+let hasErrorDisplayed = false;
 // response 拦截器
 service.interceptors.response.use(
 	(response) => {
 		return response;
 	},
 	(error) => {
-		if (error.response.status == 401) {
-			cookies.remove("token");
-			window.location.href = "/login";
+		if (error.response) {
+			if (error.response.status == 401) {
+				cookies.remove("token");
+				window.location.href = "/login";
+			}
+			if (error.response.status != 200) {
+				ElMessage.error("请求失败，请重试");
+				console.log(error.response);
+			}
+		} else {
+			if (!hasErrorDisplayed) {
+				ElMessage.error("网络错误，请稍候重试");
+				hasErrorDisplayed = true;
+			}
 		}
 	}
 );

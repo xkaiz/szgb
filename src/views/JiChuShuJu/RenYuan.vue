@@ -21,7 +21,7 @@
 				<div>
 					<el-button type="primary">新建</el-button>
 					<el-button type="warning" plain>修改</el-button>
-					<el-button type="danger" plain>删除</el-button>
+					<el-button type="danger" plain @click="del">删除</el-button>
 				</div>
 				<el-button-group>
 					<!-- <el-button type="default">导入</el-button>
@@ -29,7 +29,8 @@
 					<el-button type="default" @click="refreshTable">刷新</el-button>
 				</el-button-group>
 			</el-row>
-			<el-table class="table" :data="tableData" stripe v-loading="loading">
+			<el-table class="table" :data="tableData" stripe v-loading="loading"
+				@selection-change="handleSelectionChange">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip width="180" />
@@ -80,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 import useStore from "@/store/index";
 const store = useStore();
@@ -94,10 +95,12 @@ const tableData = ref([]);
 const loading = ref(false);
 const pageNo = ref(1);
 const pageSize = ref(10);
-const total = ref(100);
+const total = ref(0);
 
 const dialogVisible = ref(false);
 const dialogTitle = ref("");
+
+const ids = ref("");
 
 const user = ref({
 	username: "",
@@ -112,6 +115,7 @@ const user = ref({
 });
 
 const form = ref({
+	id: "",
 	username: "",
 	name: "",
 	department: {
@@ -152,6 +156,7 @@ const clear = () => {
 
 const edit = (row) => {
 	console.log(row);
+	form.value.id = row.id;
 	form.value.username = row.username;
 	form.value.name = row.name;
 	form.value.department = row.department;
@@ -161,7 +166,23 @@ const edit = (row) => {
 }
 
 const del = (row) => {
-	console.log(row);
+	if (row.id != undefined) {
+		ids.value = row.id;
+	}
+	if (ids.value == "") {
+		return
+	}
+	userAPI.delete(ids.value).then((res) => {
+		if (res.status == 200) {
+			ElMessage.success("删除成功");
+			getUserList();
+		} else {
+			ElMessage.error("删除失败");
+			console.log(res.data);
+		}
+	}).catch(() => {
+		ElMessage.error("删除失败");
+	});
 }
 
 const submit = () => {
@@ -169,7 +190,9 @@ const submit = () => {
 		ElMessage.success("更新成功");
 		dialogVisible.value = false;
 		getUserList();
-	})
+	}).catch(() => {
+		ElMessage.error("更新失败");
+	});
 }
 
 watch(filterText, (value) => {
@@ -184,7 +207,7 @@ const handleNodeClick = (data) => {
 	if (data.children.length == 0) {
 		user.value.page.pageNo = 1;
 		pageNo.value = 1;
-		user.value.department.id = data.id;
+		user.value.department.id = data.value;
 		getUserList();
 	}
 };
@@ -226,6 +249,10 @@ const handleCurrentChange = (value) => {
 	user.value.page.pageNo = value;
 	getUserList();
 };
+
+const handleSelectionChange = (value) => {
+	ids.value = value.map((item) => item.id).join(",");
+}
 </script>
 
 <style scoped>

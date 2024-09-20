@@ -26,6 +26,7 @@ export default defineConfig({
 		proxy: {
 			// 配置跨域
 			"/api": {
+				// target: "http://192.168.43.53:8080",
 				target: "http://127.0.0.1:8080",
 				ws: true,
 				changeOrigin: true,
