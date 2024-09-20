@@ -15,7 +15,6 @@ service.interceptors.request.use((request) => {
 	}
 	return request;
 });
-let hasErrorDisplayed = false;
 // response 拦截器
 service.interceptors.response.use(
 	(response) => {
@@ -23,20 +22,27 @@ service.interceptors.response.use(
 	},
 	(error) => {
 		if (error.response) {
+			console.log(error.response.status);
 			if (error.response.status == 401) {
 				cookies.remove("token");
 				window.location.href = "/login";
-			}
-			if (error.response.status != 200) {
-				ElMessage.error("请求失败，请重试");
-				console.log(error.response);
+			} else if (error.response.status == 409) {
+				ElMessageErrorGroup(error.response.data.msg);
+				return Promise.reject(error);
+			} else if (error.response.status != 200) {
+				ElMessageErrorGroup("请求失败，请稍候重试");
 			}
 		} else {
-			if (!hasErrorDisplayed) {
-				ElMessage.error("网络错误，请稍候重试");
-				hasErrorDisplayed = true;
-			}
+			ElMessageErrorGroup("网络错误，请稍候重试");
 		}
 	}
 );
+
+const ElMessageErrorGroup = (message) => {
+	return ElMessage({
+		message: message,
+		grouping: true,
+		type: "error",
+	});
+};
 export default service;

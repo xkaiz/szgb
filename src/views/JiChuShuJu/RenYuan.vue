@@ -65,7 +65,7 @@
 				<el-col :span="8">
 					<el-form-item label="部门" prop="department">
 						<el-tree-select v-model="form.department.id" :data="store.departmentList"
-							:render-after-expand="false" check-strictly />
+							:render-after-expand="false" />
 					</el-form-item>
 				</el-col>
 			</el-row>
@@ -82,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, version } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -139,6 +139,7 @@ const form = ref({
 		id: "",
 	},
 	role: "",
+	version: "",
 });
 
 onMounted(() => {
@@ -194,6 +195,7 @@ const resetForm = () => {
 			id: "",
 		},
 		role: "",
+		version: "",
 	}
 }
 
@@ -209,6 +211,7 @@ const edit = (row) => {
 	form.value.username = row.username;
 	form.value.name = row.name;
 	form.value.department = row.department;
+	form.value.version = row.version;
 	dialogVisible.value = true;
 	dialogTitle.value = "编辑";
 
@@ -248,13 +251,7 @@ const submit = () => {
 		}
 		dialogVisible.value = false;
 		getUserList();
-	}).catch(() => {
-		if (dialogTitle.value == "编辑") {
-			ElMessage.success("更新失败");
-		} else if (dialogTitle.value == "新建") {
-			ElMessage.success("新建失败");
-		}
-	});
+	})
 	submitButtonLoading.value = false;
 	submitButtonText.value = "提交";
 }
@@ -286,6 +283,7 @@ const getUserList = () => {
 				username: element.username,
 				name: element.name,
 				department: element.department,
+				version: element.version
 			};
 			tableData.value.push(item);
 		});
@@ -320,8 +318,12 @@ const handleSelectionChange = (value) => {
 }
 
 const handleSortChange = (column, prop, order) => {
-	column.order = column.order.replace(/ending/, "");
-	user.value.page.orderBy = `${column.prop} ${column.order}`;
+	if (column.order != null) {
+		column.order = column.order.replace(/ending/, "");
+		user.value.page.orderBy = `${column.prop} ${column.order}`;
+	} else {
+		user.value.page.orderBy = ""
+	}
 	getUserList();
 }
 </script>
