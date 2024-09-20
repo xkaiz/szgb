@@ -19,7 +19,7 @@
 			</el-row>
 			<el-row class="toolbar">
 				<div>
-					<el-button type="primary">新建</el-button>
+					<el-button type="primary" @click="add">新建</el-button>
 					<el-button type="danger" plain :disabled="deleteButtonDisabled" @click="del">删除</el-button>
 				</div>
 				<el-button-group>
@@ -49,12 +49,12 @@
 			</el-row>
 		</el-main>
 	</el-container>
-	<el-dialog v-model="dialogVisible" :title="dialogTitle" width="50%" draggable overflow>
+	<el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
 		<el-form :model="form">
 			<el-row :gutter="15">
 				<el-col :span="8">
 					<el-form-item label="用户名" prop="username">
-						<el-input v-model="form.username" placeholder="请填写用户名" disabled></el-input>
+						<el-input v-model="form.username" placeholder="请填写用户名" :disabled="usernameDisabled"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="8">
@@ -110,6 +110,7 @@ const dialogTitle = ref("");
 const submitButtonLoading = ref(false);
 const submitButtonText = ref("提交");
 
+const usernameDisabled = ref(true);
 const deleteButtonDisabled = ref(true);
 
 const ids = ref("");
@@ -184,8 +185,26 @@ const clear = () => {
 	getUserList();
 }
 
+const resetForm = () => {
+	form.value = {
+		id: "",
+		username: "",
+		name: "",
+		department: {
+			id: "",
+		},
+		role: "",
+	}
+}
+
+const add = () => {
+	resetForm()
+	dialogVisible.value = true;
+	dialogTitle.value = "新建";
+	usernameDisabled.value = false;
+}
+
 const edit = (row) => {
-	console.log(row);
 	form.value.id = row.id;
 	form.value.username = row.username;
 	form.value.name = row.name;
@@ -222,11 +241,19 @@ const submit = () => {
 	submitButtonLoading.value = true;
 	submitButtonText.value = "提交中";
 	userAPI.save(form.value).then((res) => {
-		ElMessage.success("更新成功");
+		if (dialogTitle.value == "编辑") {
+			ElMessage.success("更新成功");
+		} else if (dialogTitle.value == "新建") {
+			ElMessage.success("新建成功");
+		}
 		dialogVisible.value = false;
 		getUserList();
 	}).catch(() => {
-		ElMessage.error("更新失败");
+		if (dialogTitle.value == "编辑") {
+			ElMessage.success("更新失败");
+		} else if (dialogTitle.value == "新建") {
+			ElMessage.success("新建失败");
+		}
 	});
 	submitButtonLoading.value = false;
 	submitButtonText.value = "提交";
