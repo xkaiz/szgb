@@ -1,9 +1,16 @@
 <template>
 	<el-container class="container">
 		<el-aside class="tree">
-			<el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
+			<el-row :gutter="5">
+				<el-col :span="18">
+					<el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
+				</el-col>
+				<el-col :span="6">
+					<el-button type="primary" @click="drawerVisible = true">管理</el-button>
+				</el-col>
+			</el-row>
 			<el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
-				:filter-node-method="filterNode" v-loading="departmentLoading" />
+				:filter-node-method="filterNode" v-loading="departmentLoading" default-expand-all />
 		</el-aside>
 		<el-main class="main">
 			<el-row class="search">
@@ -15,16 +22,14 @@
 				</el-row>
 				<el-button type="primary" @click="search">查询</el-button>
 				<el-button type="primary" @click="clear">重置</el-button>
-
 			</el-row>
 			<el-row class="toolbar">
 				<div>
-					<el-button type="primary" @click="add">新建</el-button>
-					<el-button type="danger" plain :disabled="deleteButtonDisabled" @click="del">删除</el-button>
+					<el-button type="primary" @click="addUser">新增</el-button>
+					<el-button type="danger" plain :disabled="deleteUserButtonDisabled"
+						@click="deleteUser">删除</el-button>
 				</div>
 				<el-button-group>
-					<!-- <el-button type="default">导入</el-button>
-					<el-button type="default">导出</el-button> -->
 					<el-button type="default" @click="refreshTable">刷新</el-button>
 				</el-button-group>
 			</el-row>
@@ -37,8 +42,8 @@
 				<el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
 				<el-table-column fixed="right" label="操作" width="120">
 					<template #default="scope">
-						<el-button link type="primary" size="small" @click="edit(scope.row)">编辑</el-button>
-						<el-button link type="primary" size="small" @click="del(scope.row)">删除</el-button>
+						<el-button link type="primary" size="small" @click="editUser(scope.row)">编辑</el-button>
+						<el-button link type="primary" size="small" @click="deleteUser(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -49,31 +54,95 @@
 			</el-row>
 		</el-main>
 	</el-container>
-	<el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-		<el-form :model="form">
+	<el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
+		<el-form :model="userForm">
 			<el-row :gutter="15">
 				<el-col :span="8">
 					<el-form-item label="用户名" prop="username">
-						<el-input v-model="form.username" placeholder="请填写用户名" :disabled="usernameDisabled"></el-input>
+						<el-input v-model="userForm.username" placeholder="请填写用户名"
+							:disabled="usernameDisabled"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="8">
 					<el-form-item label="姓名" prop="name">
-						<el-input v-model="form.name" placeholder="请填写姓名"></el-input>
+						<el-input v-model="userForm.name" placeholder="请填写姓名"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="8">
 					<el-form-item label="部门" prop="department">
-						<el-tree-select v-model="form.department.id" :data="store.departmentList"
-							:render-after-expand="false" />
+						<el-tree-select v-model="userForm.department.id" :data="store.departmentList"
+							:render-after-expand="false" filterable />
 					</el-form-item>
 				</el-col>
 			</el-row>
 		</el-form>
 		<template #footer>
 			<div class="dialog-footer">
-				<el-button @click="dialogVisible = false">取消</el-button>
-				<el-button type="primary" @click="submit" :loading="submitButtonLoading">
+				<el-button @click="userDialogVisible = false">取消</el-button>
+				<el-button type="primary" @click="submit('user')" :loading="submitButtonLoading">
+					{{ submitButtonText }}
+				</el-button>
+			</div>
+		</template>
+	</el-dialog>
+	<div class="drawer">
+		<el-drawer v-model="drawerVisible" direction="ltr" size="30%">
+			<template #header>
+				<h3>部门管理</h3>
+			</template>
+			<template #default>
+				<el-row :gutter="5">
+					<el-col :span="18">
+						<el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
+					</el-col>
+					<el-col :span="3">
+						<el-button type="primary" @click="addDepartment()">新增</el-button>
+					</el-col>
+					<el-col :span="3">
+						<el-button type="danger" plain :disabled="deleteDepartmentButtonDisabled"
+							@click="deleteDepartment(departmentIDs)">删除</el-button>
+					</el-col>
+				</el-row>
+				<el-tree ref="treeRef" :data="treeData" highlight-current :filter-node-method="filterNode" show-checkbox
+					@check-change="handleCheckChange" v-loading="departmentLoading" check-strictly node-key="value"
+					default-expand-all>
+					<template #default="{ node, data }">
+						<span class="tree-node">
+							<span>{{ node.label }}</span>
+							<span>
+								<el-button link @click="editDepartment(data, $event);
+								$event.stopPropagation()">编辑</el-button>
+								<el-button link @click="deleteDepartment(node, data, $event);
+								$event.stopPropagation()">删除</el-button>
+							</span>
+						</span>
+					</template>
+				</el-tree>
+			</template>
+			<template #footer>
+			</template>
+		</el-drawer>
+	</div>
+	<el-dialog v-model="departmentDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
+		<el-form :model="departmentForm">
+			<el-row :gutter="15">
+				<el-col :span="12">
+					<el-form-item label="部门名称" prop="name">
+						<el-input v-model="departmentForm.name" placeholder="请填写部门名称"></el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="12">
+					<el-form-item label="父部门" prop="parent">
+						<el-tree-select v-model="departmentForm.parent.id" :data="store.departmentList"
+							:render-after-expand="false" filterable />
+					</el-form-item>
+				</el-col>
+			</el-row>
+		</el-form>
+		<template #footer>
+			<div class="dialog-footer">
+				<el-button @click="departmentDialogVisible = false">取消</el-button>
+				<el-button type="primary" @click="submit('department')" :loading="submitButtonLoading">
 					{{ submitButtonText }}
 				</el-button>
 			</div>
@@ -82,7 +151,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, version } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -104,16 +173,21 @@ const pageNo = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 
-const dialogVisible = ref(false);
+const userDialogVisible = ref(false);
+const departmentDialogVisible = ref(false);
 const dialogTitle = ref("");
 
 const submitButtonLoading = ref(false);
 const submitButtonText = ref("提交");
 
 const usernameDisabled = ref(true);
-const deleteButtonDisabled = ref(true);
+const deleteUserButtonDisabled = ref(true);
+const deleteDepartmentButtonDisabled = ref(true);
 
-const ids = ref("");
+const drawerVisible = ref(false);
+
+const userIDs = ref("");
+const departmentIDs = ref("");
 
 const user = ref({
 	username: "",
@@ -134,7 +208,7 @@ const department = ref({
 	}
 });
 
-const form = ref({
+const userForm = ref({
 	id: "",
 	username: "",
 	name: "",
@@ -142,6 +216,15 @@ const form = ref({
 		id: "",
 	},
 	role: "",
+	version: "",
+});
+
+const departmentForm = ref({
+	id: "",
+	name: "",
+	parent: {
+		id: ""
+	},
 	version: "",
 });
 
@@ -190,7 +273,7 @@ const clear = () => {
 }
 
 const resetForm = () => {
-	form.value = {
+	userForm.value = {
 		id: "",
 		username: "",
 		name: "",
@@ -200,61 +283,126 @@ const resetForm = () => {
 		role: "",
 		version: "",
 	}
+	departmentForm.value = {
+		id: "",
+		name: "",
+		parent: {
+			id: "",
+		},
+		version: "",
+	}
 }
 
-const add = () => {
+const addUser = () => {
 	resetForm()
-	dialogVisible.value = true;
-	dialogTitle.value = "新建";
+	userDialogVisible.value = true;
+	dialogTitle.value = "新建用户";
 	usernameDisabled.value = false;
 }
 
-const edit = (row) => {
-	form.value.id = row.id;
-	form.value.username = row.username;
-	form.value.name = row.name;
-	form.value.department = row.department;
-	form.value.version = row.version;
-	dialogVisible.value = true;
-	dialogTitle.value = "编辑";
-
+const editUser = (row) => {
+	userForm.value.id = row.id;
+	userForm.value.username = row.username;
+	userForm.value.name = row.name;
+	userForm.value.department = row.department;
+	userForm.value.version = row.version;
+	userDialogVisible.value = true;
+	dialogTitle.value = "编辑用户";
 }
 
-const del = (row) => {
+const deleteUser = (row) => {
 	ElMessageBox.confirm("确定删除吗？", "提示", {
 		confirmButtonText: "确定",
 		cancelButtonText: "取消",
 		type: "warning",
 	}).then(() => {
 		if (row.id != undefined) {
-			ids.value = row.id;
+			userIDs.value = row.id;
 		}
-		if (ids.value == "") {
+		if (userIDs.value == "") {
 			return
 		}
-		userAPI.delete(ids.value).then((res) => {
+		userAPI.delete(userIDs.value).then((res) => {
 			ElMessage.success("删除成功");
 			getUserList();
 		}).catch(() => {
 			ElMessage.error("删除失败");
 		});
-	}).catch(() => {
-	});
-
+	}).catch(() => { })
 }
 
-const submit = () => {
+const addDepartment = () => {
+	resetForm()
+	departmentDialogVisible.value = true;
+	dialogTitle.value = "新建部门";
+}
+
+const editDepartment = (row) => {
+	departmentForm.value.id = row.value;
+	departmentForm.value.name = row.label;
+	departmentForm.value.parent.id = row.parent;
+	departmentForm.value.version = row.version;
+	departmentDialogVisible.value = true;
+	dialogTitle.value = "编辑部门";
+}
+
+const deleteDepartment = (node, data) => {
+	ElMessageBox.confirm("确定要删除吗？", "提示", {
+		confirmButtonText: "确定",
+		cancelButtonText: "取消",
+		type: "warning",
+	}).then(() => {
+		if (node.data && node.data.value != undefined) {
+			departmentIDs.value = node.data.value;
+			treeChecked.value.push(node);
+		}
+		if (departmentIDs.value == "") {
+			return
+		}
+		departmentAPI.delete(departmentIDs.value).then((res) => {
+			ElMessage.success("删除成功");
+			treeChecked.value.forEach(item => {
+				treeRef.value.remove(item);
+			});
+			// getDepartmentList();
+		}).catch(() => {
+			ElMessage.error("删除失败");
+		});
+	}).catch((error) => {
+		console.log(error);
+	})
+}
+
+
+const submit = (type) => {
 	submitButtonLoading.value = true;
 	submitButtonText.value = "提交中";
-	userAPI.save(form.value).then((res) => {
-		if (dialogTitle.value == "编辑") {
-			ElMessage.success("更新成功");
-		} else if (dialogTitle.value == "新建") {
-			ElMessage.success("新建成功");
-		}
-		dialogVisible.value = false;
-		getUserList();
-	})
+	if (type == "user") {
+		userAPI.save(userForm.value).then((res) => {
+			if (dialogTitle.value == "编辑用户") {
+				ElMessage.success("更新用户成功");
+			} else if (dialogTitle.value == "新建用户") {
+				ElMessage.success("新建用户成功");
+			}
+			userDialogVisible.value = false;
+			getUserList();
+		}).catch((error) => {
+			console.log(error);
+		})
+	} else if (type == "department") {
+		console.log(departmentForm.value);
+		departmentAPI.save(departmentForm.value).then((res) => {
+			if (dialogTitle.value == "编辑部门") {
+				ElMessage.success("更新部门成功");
+			} else if (dialogTitle.value == "新建部门") {
+				ElMessage.success("新建部门成功");
+			}
+			departmentDialogVisible.value = false;
+			getDepartmentList();
+		}).catch((error) => {
+			console.log(error);
+		})
+	}
 	submitButtonLoading.value = false;
 	submitButtonText.value = "提交";
 }
@@ -295,6 +443,14 @@ const getUserList = () => {
 	});
 };
 
+const getDepartmentList = () => {
+	departmentLoading.value = true;
+	departmentAPI.getDepartmentList(department.value).then((res) => {
+		treeData.value = buildTree(res.data.page.list);
+		departmentLoading.value = false;
+	});
+};
+
 const refreshTable = () => {
 	user.value.page.pageNo = 1;
 	pageNo.value = 1;
@@ -316,8 +472,8 @@ const handleCurrentChange = (value) => {
 };
 
 const handleSelectionChange = (value) => {
-	deleteButtonDisabled.value = value.length == 0;
-	ids.value = value.map((item) => item.id).join(",");
+	deleteUserButtonDisabled.value = value.length == 0;
+	userIDs.value = value.map((item) => item.id).join(",");
 }
 
 const handleSortChange = (column, prop, order) => {
@@ -329,6 +485,19 @@ const handleSortChange = (column, prop, order) => {
 	}
 	getUserList();
 }
+
+const treeChecked = ref([])
+const handleCheckChange = (data) => {
+	if (data.children.length > 0 && node) {
+		ElMessage.warning("无法删除当前包含子节点的部门，请先删除子部门");
+		return
+	}
+	const node = treeRef.value.getCheckedNodes(false, false)
+	treeChecked.value = node
+	departmentIDs.value = treeChecked.value.map((item) => item.value).join(",");
+	deleteDepartmentButtonDisabled.value = (treeChecked.value.length == 0);
+}
+
 </script>
 
 <style scoped>
@@ -377,5 +546,16 @@ const handleSortChange = (column, prop, order) => {
 
 .form-item {
 	margin-right: 1%;
+}
+
+.drawer:deep(.el-drawer__header) {
+	margin-bottom: 0
+}
+
+.tree-node {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 }
 </style>
