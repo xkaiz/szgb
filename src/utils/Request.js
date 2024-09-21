@@ -22,7 +22,6 @@ service.interceptors.response.use(
 	},
 	(error) => {
 		if (error.response) {
-			console.log(error.response.status);
 			if (error.response.status == 401) {
 				cookies.remove("token");
 				window.location.href = "/login";

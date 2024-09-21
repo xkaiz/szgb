@@ -128,7 +128,10 @@ const user = ref({
 });
 
 const department = ref({
-	name: "厦门轨道集团",
+	page: {
+		pageNo: 1,
+		pageSize: 20
+	}
 });
 
 const form = ref({
