@@ -42,7 +42,9 @@
 				<el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
 				<el-table-column fixed="right" label="操作" width="120">
 					<template #default="scope">
-						<el-button link type="primary" size="small" @click="editUser(scope.row)">编辑</el-button>
+						<el-button link type="primary" size="small" @click="editUser(scope.row)">
+							{{ editButtonText }}
+						</el-button>
 						<el-button link type="primary" size="small" @click="deleteUser(scope.row)">删除</el-button>
 					</template>
 				</el-table-column>
@@ -111,7 +113,7 @@
 							<span>{{ node.label }}</span>
 							<span>
 								<el-button link @click="editDepartment(data, $event);
-								$event.stopPropagation()">编辑</el-button>
+								$event.stopPropagation()">{{ editButtonText }}</el-button>
 								<el-button link @click="deleteDepartment(node, data, $event);
 								$event.stopPropagation()">删除</el-button>
 							</span>
@@ -189,6 +191,8 @@ const drawerVisible = ref(false);
 const userIDs = ref("");
 const departmentIDs = ref("");
 
+const editButtonText = ref("编辑");
+
 const user = ref({
 	username: "",
 	name: "",
@@ -234,7 +238,11 @@ onMounted(() => {
 		window.location.href = "/login?path=RenYuan";
 		return
 	}
+	user.value.id = store.user.id
 	Promise.all([
+		userAPI.getUserRole(user.value).then((res) => {
+			console.log(res.data);
+		}),
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
 			store.setUserList(res.data.page.list);

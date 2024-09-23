@@ -56,13 +56,15 @@ const autoLogin = () => {
     if (loginForm.value.token) {
         loginButtonLoading.value = true;
         loginButtonText.value = "自动登录中";
-        getLogin();
+        login();
     }
 };
-const getLogin = () => {
-    userAPI.getLogin(loginForm.value).then((res) => {
+const login = () => {
+    userAPI.login(loginForm.value).then((res) => {
         cookies.set("token", res.data.sysUser.token);
         store.setUser(res.data.sysUser);
+        console.log(res.data);
+
         router.push("/" + path.value);
     }).catch(() => {
         loginButtonLoading.value = false;
@@ -76,7 +78,7 @@ const handleLogin = () => {
     loginForm.value.password = md5(loginForm.value.password);
     loginFormRef.value.validate((valid) => {
         if (valid) {
-            getLogin();
+            login();
         }
     });
 };

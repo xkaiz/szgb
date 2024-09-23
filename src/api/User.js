@@ -2,7 +2,7 @@ import request from "@/utils/Request";
 
 export default {
 	//登录
-	getLogin(data) {
+	login(data) {
 		return request({
 			url: "/sys/user/login",
 			method: "post",
@@ -34,6 +34,15 @@ export default {
 			url: "/sys/user/delete",
 			method: "delete",
 			params: { ids: ids },
+		});
+	},
+
+	//获取用户角色
+	getUserRole(data) {
+		return request({
+			url: "/sys/userRole/list",
+			method: "post",
+			data: data,
 		});
 	},
 };
