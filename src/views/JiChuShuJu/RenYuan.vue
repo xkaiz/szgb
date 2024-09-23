@@ -153,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -163,7 +163,6 @@ const store = useStore();
 import userAPI from "@/api/User";
 import departmentAPI from "@/api/Department";
 import { buildTree } from "@/utils/BuildTree";
-import { permission } from "@/utils/Permission";
 import { ElMessage, ElMessageBox } from "element-plus";
 
 const treeRef = ref(null);
@@ -192,7 +191,13 @@ const drawerVisible = ref(false);
 const userIDs = ref("");
 const departmentIDs = ref("");
 
-const editButtonText = ref("编辑");
+const editButtonText = computed(() => {
+	if (store.roleLevel == 1) {
+		return "编辑";
+	} else {
+		return "查看";
+	}
+});
 
 const user = ref({
 	username: "",
@@ -229,12 +234,12 @@ const departmentForm = ref({
 });
 
 onMounted(() => {
+	console.log(store.roleLevel);
 	const token = cookies.get("token");
 	if (token == null || token == "") {
 		window.location.href = "/login?path=RenYuan";
 		return
 	}
-	permission()
 	Promise.all([
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;

@@ -28,6 +28,7 @@ import useStore from "@/store/index";
 const store = useStore();
 
 import userAPI from "@/api/User";
+import { permission } from "@/utils/Permission";
 import { ElMessage } from "element-plus";
 
 const loginForm = ref({
@@ -89,8 +90,6 @@ const handleLogin = () => {
 };
 
 const getUserRole = (user) => {
-    console.log(user);
-
     userRole.value.user.id = user.id;
     Promise.all([
         userAPI.getUserRole(userRole.value).then((res) => {
@@ -100,6 +99,7 @@ const getUserRole = (user) => {
             user.role = roleIds.join(",");
             store.setUser(user);
         }),
+        permission()
     ]).then(() => {
         router.push("/" + path.value);
     });
