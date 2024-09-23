@@ -163,6 +163,7 @@ const store = useStore();
 import userAPI from "@/api/User";
 import departmentAPI from "@/api/Department";
 import { buildTree } from "@/utils/BuildTree";
+import { permission } from "@/utils/Permission";
 import { ElMessage, ElMessageBox } from "element-plus";
 
 const treeRef = ref(null);
@@ -212,15 +213,10 @@ const department = ref({
 	}
 });
 
+
 const userForm = ref({
-	id: "",
-	username: "",
-	name: "",
-	department: {
-		id: "",
-	},
-	role: "",
-	version: "",
+	user: user.value,
+	role: {}
 });
 
 const departmentForm = ref({
@@ -238,11 +234,8 @@ onMounted(() => {
 		window.location.href = "/login?path=RenYuan";
 		return
 	}
-	user.value.id = store.user.id
+	permission()
 	Promise.all([
-		userAPI.getUserRole(user.value).then((res) => {
-			console.log(res.data);
-		}),
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
 			store.setUserList(res.data.page.list);

@@ -35,6 +35,13 @@ const loginForm = ref({
     password: "123456",
     token: "",
 });
+
+const userRole = ref({
+    user: {
+        id: ""
+    }
+});
+
 const loginFormRef = ref(null);
 const rules = {
     username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
@@ -45,6 +52,7 @@ const loginButtonLoading = ref(false);
 const loginButtonText = ref("登录");
 
 const path = ref("home");
+
 onMounted(() => {
     const url = new URL(window.location.href);
     path.value = url.searchParams.get('path') == null ? "home" : url.searchParams.get('path');
@@ -62,10 +70,7 @@ const autoLogin = () => {
 const login = () => {
     userAPI.login(loginForm.value).then((res) => {
         cookies.set("token", res.data.sysUser.token);
-        store.setUser(res.data.sysUser);
-        console.log(res.data);
-
-        router.push("/" + path.value);
+        getUserRole(res.data.sysUser);
     }).catch(() => {
         loginButtonLoading.value = false;
         loginButtonText.value = "登录";
@@ -80,6 +85,23 @@ const handleLogin = () => {
         if (valid) {
             login();
         }
+    });
+};
+
+const getUserRole = (user) => {
+    console.log(user);
+
+    userRole.value.user.id = user.id;
+    Promise.all([
+        userAPI.getUserRole(userRole.value).then((res) => {
+            let roleIds = res.data.page.list.map((item) => {
+                return item.id;
+            });
+            user.role = roleIds.join(",");
+            store.setUser(user);
+        }),
+    ]).then(() => {
+        router.push("/" + path.value);
     });
 };
 </script>
