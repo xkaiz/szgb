@@ -28,8 +28,10 @@ import useStore from "@/store/index";
 const store = useStore();
 
 import userAPI from "@/api/User";
+import roleAPI from "@/api/Role";
 import { permission } from "@/utils/Permission";
 import { ElMessage } from "element-plus";
+import { id } from "element-plus/es/locales.mjs";
 
 const loginForm = ref({
     username: "admin",
@@ -41,6 +43,10 @@ const userRole = ref({
     user: {
         id: ""
     }
+});
+
+const role = ref({
+    id: "",
 });
 
 const loginFormRef = ref(null);
@@ -72,7 +78,8 @@ const login = () => {
     userAPI.login(loginForm.value).then((res) => {
         cookies.set("token", res.data.sysUser.token);
         getUserRole(res.data.sysUser);
-    }).catch(() => {
+    }).catch((error) => {
+        console.log(error);
         loginButtonLoading.value = false;
         loginButtonText.value = "登录";
     })
@@ -92,17 +99,20 @@ const handleLogin = () => {
 const getUserRole = (user) => {
     userRole.value.user.id = user.id;
     Promise.all([
-        userAPI.getUserRole(userRole.value).then((res) => {
-            let roleIds = res.data.page.list.map((item) => {
-                return item.id;
+        roleAPI.getUserRole(userRole.value).then((res) => {
+            user.role = res.data.page.list.map((item) => {
+                return { id: item.role.id, name: item.role.name };
             });
-            user.role = roleIds.join(",");
             store.setUser(user);
         }),
         permission()
     ]).then(() => {
         router.push("/" + path.value);
-    });
+    }).catch((error) => {
+        console.log(error);
+        loginButtonLoading.value = false;
+        loginButtonText.value = "登录";
+    })
 };
 </script>
 

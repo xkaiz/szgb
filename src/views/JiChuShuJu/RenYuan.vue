@@ -25,9 +25,9 @@
 			</el-row>
 			<el-row class="toolbar">
 				<div>
-					<el-button type="primary" @click="addUser">新增</el-button>
-					<el-button type="danger" plain :disabled="deleteUserButtonDisabled"
-						@click="deleteUser">删除</el-button>
+					<el-button type="primary" @click="addUser" v-if="!roleLevelBoolean">新增</el-button>
+					<el-button type="danger" plain :disabled="deleteUserButtonDisabled" @click="deleteUser"
+						v-if="!roleLevelBoolean">删除</el-button>
 				</div>
 				<el-button-group>
 					<el-button type="default" @click="refreshTable">刷新</el-button>
@@ -45,7 +45,8 @@
 						<el-button link type="primary" size="small" @click="editUser(scope.row)">
 							{{ editButtonText }}
 						</el-button>
-						<el-button link type="primary" size="small" @click="deleteUser(scope.row)">删除</el-button>
+						<el-button link type="primary" size="small" @click="deleteUser(scope.row)"
+							v-if="!roleLevelBoolean">删除</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -62,26 +63,27 @@
 				<el-col :span="8">
 					<el-form-item label="用户名" prop="username">
 						<el-input v-model="userForm.username" placeholder="请填写用户名"
-							:disabled="usernameDisabled"></el-input>
+							:disabled="usernameDisabled || roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="8">
 					<el-form-item label="姓名" prop="name">
-						<el-input v-model="userForm.name" placeholder="请填写姓名"></el-input>
+						<el-input v-model="userForm.name" placeholder="请填写姓名" :disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="8">
 					<el-form-item label="部门" prop="department">
 						<el-tree-select v-model="userForm.department.id" :data="store.departmentList"
-							:render-after-expand="false" filterable />
+							:render-after-expand="false" filterable :disabled="roleLevelBoolean" />
 					</el-form-item>
 				</el-col>
 			</el-row>
 		</el-form>
 		<template #footer>
 			<div class="dialog-footer">
-				<el-button @click="userDialogVisible = false">取消</el-button>
-				<el-button type="primary" @click="submit('user')" :loading="submitButtonLoading">
+				<el-button @click="userDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+				<el-button type="primary" @click="submit('user')" :loading="submitButtonLoading"
+					v-if="!roleLevelBoolean">
 					{{ submitButtonText }}
 				</el-button>
 			</div>
@@ -98,11 +100,11 @@
 						<el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
 					</el-col>
 					<el-col :span="3">
-						<el-button type="primary" @click="addDepartment()">新增</el-button>
+						<el-button type="primary" @click="addDepartment()" v-if="!roleLevelBoolean">新增</el-button>
 					</el-col>
 					<el-col :span="3">
 						<el-button type="danger" plain :disabled="deleteDepartmentButtonDisabled"
-							@click="deleteDepartment(departmentIDs)">删除</el-button>
+							v-if="!roleLevelBoolean" @click="deleteDepartment(departmentIDs)">删除</el-button>
 					</el-col>
 				</el-row>
 				<el-tree ref="treeRef" :data="treeData" highlight-current :filter-node-method="filterNode" show-checkbox
@@ -112,10 +114,10 @@
 						<span class="tree-node">
 							<span>{{ node.label }}</span>
 							<span>
-								<el-button link @click="editDepartment(data, $event);
+								<el-button class="blue-text-button" link @click="editDepartment(data, $event);
 								$event.stopPropagation()">{{ editButtonText }}</el-button>
-								<el-button link @click="deleteDepartment(node, data, $event);
-								$event.stopPropagation()">删除</el-button>
+								<el-button class="blue-text-button" link @click="deleteDepartment(node, data, $event);
+								$event.stopPropagation()" v-if="!roleLevelBoolean">删除</el-button>
 							</span>
 						</span>
 					</template>
@@ -130,21 +132,23 @@
 			<el-row :gutter="15">
 				<el-col :span="12">
 					<el-form-item label="部门名称" prop="name">
-						<el-input v-model="departmentForm.name" placeholder="请填写部门名称"></el-input>
+						<el-input v-model="departmentForm.name" placeholder="请填写部门名称"
+							:disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="12">
 					<el-form-item label="父部门" prop="parent">
 						<el-tree-select v-model="departmentForm.parent.id" :data="store.departmentList"
-							:render-after-expand="false" filterable />
+							:render-after-expand="false" filterable :disabled="roleLevelBoolean" />
 					</el-form-item>
 				</el-col>
 			</el-row>
 		</el-form>
 		<template #footer>
 			<div class="dialog-footer">
-				<el-button @click="departmentDialogVisible = false">取消</el-button>
-				<el-button type="primary" @click="submit('department')" :loading="submitButtonLoading">
+				<el-button @click="departmentDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+				<el-button type="primary" @click="submit('department')" :loading="submitButtonLoading"
+					v-if="!roleLevelBoolean">
 					{{ submitButtonText }}
 				</el-button>
 			</div>
@@ -196,6 +200,14 @@ const editButtonText = computed(() => {
 		return "编辑";
 	} else {
 		return "查看";
+	}
+});
+
+const roleLevelBoolean = computed(() => {
+	if (store.roleLevel == 1) {
+		return false;
+	} else {
+		return true;
 	}
 });
 
@@ -313,7 +325,7 @@ const editUser = (row) => {
 	userForm.value.department = row.department;
 	userForm.value.version = row.version;
 	userDialogVisible.value = true;
-	dialogTitle.value = "编辑用户";
+	dialogTitle.value = editButtonText.value + "用户";
 }
 
 const deleteUser = (row) => {
@@ -349,7 +361,7 @@ const editDepartment = (row) => {
 	departmentForm.value.parent.id = row.parent;
 	departmentForm.value.version = row.version;
 	departmentDialogVisible.value = true;
-	dialogTitle.value = "编辑部门";
+	dialogTitle.value = editButtonText.value + "部门";
 }
 
 const deleteDepartment = (node, data) => {
@@ -563,5 +575,9 @@ const handleCheckChange = (data) => {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+}
+
+.blue-text-button {
+	color: var(--el-color-primary)
 }
 </style>

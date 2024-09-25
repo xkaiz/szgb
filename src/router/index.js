@@ -71,6 +71,12 @@ const routes = [
 				name: "RenYuan",
 				meta: { title: "人员管理" },
 			},
+			{
+				path: "/ZiDian",
+				component: () => import("@/views/JiChuShuJu/ZiDian.vue"),
+				name: "ZiDian",
+				meta: { title: "字典管理" },
+			},
 		],
 	},
 ];

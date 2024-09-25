@@ -8,7 +8,7 @@ const levels = [
 ];
 
 export const permission = () => {
-	const roles = store.user.role.split(",");
+	const roles = store.user.role.map((item) => item.id).join(",");
 	const levelsFound = levels.filter((l) => l.roles.some((role) => roles.includes(role))).map((l) => l.level);
 	store.setRoleLevel(levelsFound.length > 0 ? Math.min(...levelsFound) : null);
 };

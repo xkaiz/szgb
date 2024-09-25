@@ -36,13 +36,4 @@ export default {
 			params: { ids: ids },
 		});
 	},
-
-	//获取用户角色
-	getUserRole(data) {
-		return request({
-			url: "/sys/userRole/list",
-			method: "post",
-			data: data,
-		});
-	},
 };
