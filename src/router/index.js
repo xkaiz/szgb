@@ -71,11 +71,18 @@ const routes = [
 				name: "RenYuan",
 				meta: { title: "人员管理" },
 			},
+
 			{
-				path: "/ZiDian",
-				component: () => import("@/views/JiChuShuJu/ZiDian.vue"),
-				name: "ZiDian",
-				meta: { title: "字典管理" },
+				path: "/JueSe",
+				component: () => import("@/views/JiChuShuJu/JueSe.vue"),
+				name: "JueSe",
+				meta: { title: "角色管理" },
+			},
+			{
+				path: "/ZhengShu",
+				component: () => import("@/views/JiChuShuJu/ZhengShu.vue"),
+				name: "ZhengShu",
+				meta: { title: "证书管理" },
 			},
 		],
 	},

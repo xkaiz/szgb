@@ -104,8 +104,8 @@ const getUserRole = (user) => {
                 return { id: item.role.id, name: item.role.name };
             });
             store.setUser(user);
+            permission()
         }),
-        permission()
     ]).then(() => {
         router.push("/" + path.value);
     }).catch((error) => {

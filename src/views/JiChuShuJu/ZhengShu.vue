@@ -1,45 +1,14 @@
 <template>
     <el-container class="container">
-        <el-aside class="tree">
-            <el-row :gutter="5">
-                <el-col :span="18">
-                    <el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
-                </el-col>
-                <el-col :span="6">
-                    <el-button type="primary" @click="drawerVisible = true">管理</el-button>
-                </el-col>
-            </el-row>
-            <el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
-                :filter-node-method="filterNode" v-loading="departmentLoading" default-expand-all />
-        </el-aside>
-        <el-main class="main">
-            <el-row class="search">
-                <el-row class="search-item">
-                    <el-input v-model="user.username" placeholder="用户名" clearable />
-                </el-row>
-                <el-row class="search-item">
-                    <el-input v-model="user.name" placeholder="姓名" clearable />
-                </el-row>
-                <el-button type="primary" @click="search">查询</el-button>
-                <el-button type="primary" @click="clear">重置</el-button>
-            </el-row>
+        <el-main>
             <el-row class="toolbar">
-                <div>
-                    <el-button type="primary" @click="addUser" v-if="!roleLevelBoolean">新增</el-button>
-                    <el-button type="danger" plain :disabled="deleteUserButtonDisabled" @click="deleteUser"
-                        v-if="!roleLevelBoolean">删除</el-button>
-                </div>
-                <el-button-group>
-                    <el-button type="default" @click="refreshTable">刷新</el-button>
-                </el-button-group>
+                <el-button type="default" @click="refreshTable">刷新</el-button>
             </el-row>
             <el-table class="table" :data="tableData" stripe v-loading="userLoading"
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
-                <el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
-                <el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="id" label="id" width="80" />
+                <el-table-column prop="name" label="角色名称" show-overflow-tooltip sortable="custom" width="180" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="editUser(scope.row)">
@@ -89,71 +58,8 @@
             </div>
         </template>
     </el-dialog>
-    <div class="drawer">
-        <el-drawer v-model="drawerVisible" direction="ltr" size="30%">
-            <template #header>
-                <h3>部门管理</h3>
-            </template>
-            <template #default>
-                <el-row :gutter="5">
-                    <el-col :span="18">
-                        <el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
-                    </el-col>
-                    <el-col :span="3">
-                        <el-button type="primary" @click="addDepartment()" v-if="!roleLevelBoolean">新增</el-button>
-                    </el-col>
-                    <el-col :span="3">
-                        <el-button type="danger" plain :disabled="deleteDepartmentButtonDisabled"
-                            v-if="!roleLevelBoolean" @click="deleteDepartment(departmentIDs)">删除</el-button>
-                    </el-col>
-                </el-row>
-                <el-tree ref="treeRef" :data="treeData" highlight-current :filter-node-method="filterNode" show-checkbox
-                    @check-change="handleCheckChange" v-loading="departmentLoading" check-strictly node-key="value"
-                    default-expand-all>
-                    <template #default="{ node, data }">
-                        <span class="tree-node">
-                            <span>{{ node.label }}</span>
-                            <span>
-                                <el-button class="blue-text-button" link @click="editDepartment(data, $event);
-                                $event.stopPropagation()">{{ editButtonText }}</el-button>
-                                <el-button class="blue-text-button" link @click="deleteDepartment(node, data, $event);
-                                $event.stopPropagation()" v-if="!roleLevelBoolean">删除</el-button>
-                            </span>
-                        </span>
-                    </template>
-                </el-tree>
-            </template>
-            <template #footer>
-            </template>
-        </el-drawer>
-    </div>
-    <el-dialog v-model="departmentDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="departmentForm">
-            <el-row :gutter="15">
-                <el-col :span="12">
-                    <el-form-item label="部门名称" prop="name">
-                        <el-input v-model="departmentForm.name" placeholder="请填写部门名称"
-                            :disabled="roleLevelBoolean"></el-input>
-                    </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                    <el-form-item label="父部门" prop="parent">
-                        <el-tree-select v-model="departmentForm.parent.id" :data="store.departmentList"
-                            :render-after-expand="false" filterable :disabled="roleLevelBoolean" />
-                    </el-form-item>
-                </el-col>
-            </el-row>
-        </el-form>
-        <template #footer>
-            <div class="dialog-footer">
-                <el-button @click="departmentDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
-                <el-button type="primary" @click="submit('department')" :loading="submitButtonLoading"
-                    v-if="!roleLevelBoolean">
-                    {{ submitButtonText }}
-                </el-button>
-            </div>
-        </template>
-    </el-dialog>
+
+
 </template>
 
 <script setup>
@@ -164,8 +70,7 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
-import userAPI from "@/api/User";
-import departmentAPI from "@/api/Department";
+import certificationAPI from "@/api/certification";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
 
@@ -211,61 +116,20 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const user = ref({
-    username: "",
-    name: "",
-    department: {
-        id: "",
-    },
-    page: {
-        pageNo: 1,
-        pageSize: 20
-    }
-});
-
-const department = ref({
-    page: {
-        pageNo: 1,
-        pageSize: 20
-    }
-});
-
-
-const userForm = ref({
-    user: user.value,
-    role: {}
-});
-
-const departmentForm = ref({
-    id: "",
-    name: "",
-    parent: {
-        id: ""
-    },
-    version: "",
+const certification = ref({
+    id: ""
 });
 
 onMounted(() => {
-    console.log(store.roleLevel);
     const token = cookies.get("token");
     if (token == null || token == "") {
         window.location.href = "/login?path=RenYuan";
         return
     }
-    Promise.all([
-        userAPI.getUserList(user.value).then((res) => {
-            res.data.page.list.count = res.data.page.count;
-            store.setUserList(res.data.page.list);
-            userLoading.value = false;
-        }),
-        departmentAPI.getDepartmentList(department.value).then((res) => {
-            store.setDepartmentList(buildTree(res.data.page.list));
-            departmentLoading.value = false;
-        }),
-    ]).then(() => {
-        total.value = store.userList.count;
-        tableData.value = store.userList;
-        treeData.value = store.departmentList;
+    certificationAPI.getCertificationList(certification.value).then((res) => {
+        console.log(res);
+    }).then(() => {
+
     });
 
 });
@@ -523,37 +387,14 @@ const handleCheckChange = (data) => {
     height: calc(100vh - 52px);
 }
 
-.search {
-    margin-bottom: 1%;
-}
-
-.search-item {
-    margin-right: 1%;
-}
-
-.filter {
-    margin-bottom: 5%;
-}
-
-.tree {
-    width: 20%;
-    padding: 1%;
-    border: 1px solid #ccc;
-}
-
-.main {
-    height: calc(100vh - 52px);
-    border: 1px solid #ccc;
-}
-
 .toolbar {
     display: flex;
-    justify-content: space-between;
+    justify-content: right;
     margin-bottom: 1%;
 }
 
 .table {
-    height: calc(100vh - 250px);
+    height: calc(100vh - 214px);
     margin-bottom: 2%;
 }
 

@@ -10,7 +10,8 @@
 				</el-col>
 			</el-row>
 			<el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
-				:filter-node-method="filterNode" v-loading="departmentLoading" default-expand-all />
+				:filter-node-method="filterNode" v-loading="departmentLoading" default-expand-all
+				:expand-on-click-node="false" />
 		</el-aside>
 		<el-main class="main">
 			<el-row class="search">
@@ -168,6 +169,7 @@ import userAPI from "@/api/User";
 import departmentAPI from "@/api/Department";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { get } from "@vueuse/core";
 
 const treeRef = ref(null);
 const treeData = ref([]);
@@ -246,7 +248,6 @@ const departmentForm = ref({
 });
 
 onMounted(() => {
-	console.log(store.roleLevel);
 	const token = cookies.get("token");
 	if (token == null || token == "") {
 		window.location.href = "/login?path=RenYuan";
@@ -255,6 +256,7 @@ onMounted(() => {
 	Promise.all([
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
+			console.log(res.data.page.list);
 			store.setUserList(res.data.page.list);
 			userLoading.value = false;
 		}),
@@ -434,7 +436,10 @@ const filterNode = (value, data) => {
 	return data.label.includes(value)
 }
 const handleNodeClick = (data) => {
-	if (data.children.length == 0) {
+	if (data.parent == "") {
+		user.value.department.id = ""
+		getUserList();
+	} else if (data.children.length == 0) {
 		user.value.page.pageNo = 1;
 		pageNo.value = 1;
 		user.value.department.id = data.value;
