@@ -35,8 +35,18 @@
 				</el-button-group>
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
-				@selection-change="handleSelectionChange" @sort-change="handleSortChange">
+				@selection-change="handleSelectionChange" @sort-change="handleSortChange"
+				@expand-change="handleExpandChange">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
+				<el-table-column type="expand">
+					<template #default="props">
+						<el-table :data="props.row.certifications" border v-loading="certificationLoading">
+							<el-table-column label="证书名称" prop="certification.name" />
+							<el-table-column label="获得时间" prop="gotAt" />
+							<el-table-column label="到期时间" prop="expiredAt" />
+						</el-table>
+					</template>
+				</el-table-column>
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
 				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
@@ -167,6 +177,7 @@ const store = useStore();
 
 import userAPI from "@/api/User";
 import departmentAPI from "@/api/Department";
+import certificationAPI from "@/api/Certification";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { get } from "@vueuse/core";
@@ -176,6 +187,7 @@ const treeData = ref([]);
 const filterText = ref("");
 const tableData = ref([]);
 const userLoading = ref(true);
+const certificationLoading = ref(true);
 const departmentLoading = ref(true);
 const pageNo = ref(1);
 const pageSize = ref(20);
@@ -232,6 +244,16 @@ const department = ref({
 	}
 });
 
+const userCertification = ref({
+	user: {
+		id: "",
+	},
+	page: {
+		pageNo: 1,
+		pageSize: 20
+	}
+});
+
 
 const userForm = ref({
 	user: user.value,
@@ -256,7 +278,6 @@ onMounted(() => {
 	Promise.all([
 		userAPI.getUserList(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
-			console.log(res.data.page.list);
 			store.setUserList(res.data.page.list);
 			userLoading.value = false;
 		}),
@@ -271,6 +292,25 @@ onMounted(() => {
 	});
 
 });
+
+const handleExpandChange = (row, expandedRows) => {
+	userCertification.value.user.id = row.id;
+	if (expandedRows.length > 0) {
+		certificationAPI.getUserCertification(userCertification.value).then((res) => {
+			let user = {}
+			res.data.page.list.map((element) => {
+				user = store.userList.find((item) => item.id == element.user.id);
+				user.certifications = []
+				user.certifications.push(element);
+			});
+			store.userList.map((element) => {
+				if (element.id == user.id) {
+					element.certifications = user.certifications;
+				}
+			});
+		});
+	}
+};
 
 const search = () => {
 	getUserList();
@@ -450,17 +490,7 @@ const handleNodeClick = (data) => {
 const getUserList = () => {
 	userLoading.value = true;
 	userAPI.getUserList(user.value).then((res) => {
-		tableData.value = [];
-		res.data.page.list.forEach((element) => {
-			let item = {
-				id: element.id,
-				username: element.username,
-				name: element.name,
-				department: element.department,
-				version: element.version
-			};
-			tableData.value.push(item);
-		});
+		tableData.value = res.data.page.list
 		total.value = res.data.page.count;
 		userLoading.value = false;
 	});
