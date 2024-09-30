@@ -36,9 +36,9 @@
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
 				@selection-change="handleSelectionChange" @sort-change="handleSortChange"
-				@expand-change="handleExpandChange">
+				@expand-change="handleExpandChange" row-key="id">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
-				<el-table-column type="expand">
+				<!-- <el-table-column type="expand">
 					<template #default="props">
 						<el-table :data="props.row.certifications" border v-loading="certificationLoading">
 							<el-table-column label="证书名称" prop="certification.name" />
@@ -46,7 +46,7 @@
 							<el-table-column label="到期时间" prop="expiredAt" />
 						</el-table>
 					</template>
-				</el-table-column>
+</el-table-column> -->
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
 				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
@@ -168,7 +168,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed, nextTick } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -208,6 +208,8 @@ const drawerVisible = ref(false);
 
 const userIDs = ref("");
 const departmentIDs = ref("");
+
+const expandedRows = ref([]);
 
 const editButtonText = computed(() => {
 	if (store.roleLevel == 1) {
@@ -306,8 +308,13 @@ const handleExpandChange = (row, expandedRows) => {
 			store.userList.map((element) => {
 				if (element.id == user.id) {
 					element.certifications = user.certifications;
+					element.certifications.map((item) => {
+						item.gotAt = new Date(item.gotAt).toLocaleString();
+						item.expiredAt = new Date(item.expiredAt).toLocaleString();
+					});
 				}
 			});
+			certificationLoading.value = false;
 		});
 	}
 };

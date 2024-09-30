@@ -10,6 +10,8 @@ const useStore = defineStore(
 		const roleLevel = ref(0);
 		const role = ref({});
 		const certification = ref({});
+		const userRole = ref({});
+		const userCertification = ref({});
 
 		const setUser = (data) => {
 			user.value = data;
@@ -35,6 +37,14 @@ const useStore = defineStore(
 			certification.value = data;
 		};
 
+		const setUserRole = (data) => {
+			userRole.value = data;
+		};
+
+		const setUserCertification = (data) => {
+			userCertification.value = data;
+		};
+
 		const logout = () => {
 			user.value = {};
 		};
@@ -49,9 +59,13 @@ const useStore = defineStore(
 			roleLevel,
 			setRoleLevel,
 			role,
+			setRole,
 			certification,
 			setCertification,
-			setRole,
+			userRole,
+			setUserRole,
+			userCertification,
+			setUserCertification,
 			logout,
 		};
 	},

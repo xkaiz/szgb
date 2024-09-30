@@ -22,10 +22,12 @@ defineExpose({
 .container {
 	height: calc(100vh - 52px);
 }
+
 .sidebar {
 	width: 10%;
 	border: 1px solid #ccc;
 }
+
 .main {
 	padding: 0;
 }

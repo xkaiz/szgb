@@ -1,28 +1,28 @@
 import request from "@/utils/Request";
 
 export default {
-	//获取角色列表
-	getRoleList(data) {
+	//获得用户证书列表
+	getUserCertificationList(data) {
 		return request({
-			url: "/sys/role/list",
+			url: "/userCertification/list",
 			method: "post",
 			data: data,
 		});
 	},
 
-	//更新角色
+	//更新证书
 	save(data) {
 		return request({
-			url: "/sys/role/save",
+			url: "/userCertification/save",
 			method: "post",
 			data: data,
 		});
 	},
 
-	//删除角色
+	//删除证书
 	delete(ids) {
 		return request({
-			url: "/sys/role/delete",
+			url: "/userCertification/delete",
 			method: "delete",
 			params: { ids: ids },
 		});

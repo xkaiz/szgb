@@ -28,10 +28,9 @@ import useStore from "@/store/index";
 const store = useStore();
 
 import userAPI from "@/api/User";
-import roleAPI from "@/api/Role";
+import userRoleAPI from "@/api/UserRole";
 import { permission } from "@/utils/Permission";
 import { ElMessage } from "element-plus";
-import { id } from "element-plus/es/locales.mjs";
 
 const loginForm = ref({
     username: "admin",
@@ -99,7 +98,7 @@ const handleLogin = () => {
 const getUserRole = (user) => {
     userRole.value.user.id = user.id;
     Promise.all([
-        roleAPI.getUserRole(userRole.value).then((res) => {
+        userRoleAPI.getUserRoleList(userRole.value).then((res) => {
             user.role = res.data.page.list.map((item) => {
                 return { id: item.role.id, name: item.role.name };
             });

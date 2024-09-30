@@ -4,7 +4,10 @@
         <el-main class="main">
             <el-row class="search">
                 <el-row class="search-item">
-                    <el-input v-model="certification.name" placeholder="证书名称" clearable />
+                    <el-input v-model="userRole.name" placeholder="姓名" clearable />
+                </el-row>
+                <el-row class="search-item">
+                    <el-input v-model="userRole.name" placeholder="证书名称" clearable />
                 </el-row>
                 <el-button type="primary" @click="search">查询</el-button>
                 <el-button type="primary" @click="clear">重置</el-button>
@@ -43,17 +46,17 @@
         </el-main>
     </el-container>
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="certificationForm">
+        <el-form :model="userRoleForm">
             <el-row :gutter="15">
                 <el-col :span="12">
                     <el-form-item label="证书名称" prop="name">
-                        <el-input v-model="certificationForm.name" placeholder="请填写证书名称"
+                        <el-input v-model="userRoleForm.name" placeholder="请填写证书名称"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
                     <el-form-item label="期限" prop="period">
-                        <el-select v-model="certificationForm.period" placeholder="请选择期限" style="width: 240px">
+                        <el-select v-model="userRoleForm.period" placeholder="请选择期限" style="width: 240px">
                             <el-option v-for="item in peroidOptions" :key="item.value" :label="item.label"
                                 :value="item.value" />
                         </el-select>
@@ -80,7 +83,7 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
-import certificationAPI from "@/api/Certification";
+import userRoleAPI from "@/api/UserRole";
 import { ElMessage, ElMessageBox } from "element-plus";
 
 const tableData = ref([]);
@@ -128,19 +131,26 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const certification = ref({
-    name: "",
-    period: "",
+const userRole = ref({
+    user: {
+        id: ""
+    },
+    role: {
+        id: ""
+    },
     page: {
         pageNo: 1,
         pageSize: 20
     }
 });
 
-const certificationForm = ref({
-    id: "",
-    name: "",
-    period: "",
+const userRoleForm = ref({
+    user: {
+        id: ""
+    },
+    role: {
+        id: ""
+    },
     version: ""
 });
 
@@ -159,7 +169,7 @@ const search = () => {
 }
 
 const clear = () => {
-    certification.value = {
+    userRole.value = {
         id: "",
         name: "",
         page: {
@@ -171,7 +181,7 @@ const clear = () => {
 }
 
 const resetForm = () => {
-    certificationForm.value = {
+    userRoleForm.value = {
         id: "",
         name: "",
         page: {
@@ -188,9 +198,9 @@ const add = () => {
 }
 
 const edit = (row) => {
-    certificationForm.value.id = row.id;
-    certificationForm.value.name = row.name;
-    certificationForm.value.version = row.version;
+    userRoleForm.value.id = row.id;
+    userRoleForm.value.name = row.name;
+    userRoleForm.value.version = row.version;
     dialogVisible.value = true;
     dialogTitle.value = editButtonText.value + "证书";
 }
@@ -207,7 +217,7 @@ const del = (row) => {
         if (IDs.value == "") {
             return
         }
-        certificationAPI.delete(IDs.value).then((res) => {
+        userRoleAPI.delete(IDs.value).then((res) => {
             ElMessage.success("删除成功");
             getList();
         }).catch((error) => {
@@ -220,7 +230,7 @@ const del = (row) => {
 const submit = () => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
-    certificationAPI.save(certificationForm.value).then((res) => {
+    userRoleAPI.save(userRoleForm.value).then((res) => {
         ElMessage.success("提交成功");
         dialogVisible.value = false;
         getList();
@@ -232,30 +242,17 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    certificationAPI.getCertificationList(certification.value).then((res) => {
-        res = formatPeriod(res)
-        store.setCertification(res.data.page.list);
+    userRoleAPI.getUserRoleList(userRole.value).then((res) => {
+        console.log(res);
+        store.setUserCertification(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
         loading.value = false;
     });
 };
 
-const formatPeriod = (res) => {
-    res.data.page.list.map((item) => {
-        if (item.period == -1) {
-            item.period = "无期限";
-        } else if (item.period <= 365) {
-            item.period = `${item.period}天`;
-        } else if (item.period > 365) {
-            item.period = `${Math.floor(item.period / 365)}年`;
-        }
-    })
-    return res
-}
-
 const refreshTable = () => {
-    certification.value.page.pageNo = 1;
+    userRole.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };

@@ -84,6 +84,18 @@ const routes = [
 				name: "ZhengShu",
 				meta: { title: "证书管理" },
 			},
+			{
+				path: "/ZiZhi",
+				component: () => import("@/views/JiChuShuJu/ZiZhi.vue"),
+				name: "ZiZhi",
+				meta: { title: "资质管理" },
+			},
+			{
+				path: "/QuanXian",
+				component: () => import("@/views/JiChuShuJu/QuanXian.vue"),
+				name: "QuanXian",
+				meta: { title: "权限管理" },
+			},
 		],
 	},
 ];
