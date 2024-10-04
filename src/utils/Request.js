@@ -29,7 +29,8 @@ service.interceptors.response.use(
 				ElMessageErrorGroup(error.response.data.msg);
 				return Promise.reject(error);
 			} else if (error.response.status != 200) {
-				ElMessageErrorGroup("请求失败，请稍候重试");
+				// ElMessageErrorGroup("请求失败，请稍候重试");
+				return Promise.reject(error);
 			}
 		} else {
 			ElMessageErrorGroup("网络错误，请稍候重试");

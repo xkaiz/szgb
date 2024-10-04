@@ -383,6 +383,10 @@ const deleteUser = (row) => {
 		cancelButtonText: "取消",
 		type: "warning",
 	}).then(() => {
+		if (store.user.id == row.id) {
+			ElMessage.error("无法删除该账号");
+			return
+		}
 		if (row.id != undefined) {
 			userIDs.value = row.id;
 		}

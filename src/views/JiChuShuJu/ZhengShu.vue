@@ -22,7 +22,7 @@
             <el-table class="table" :data="tableData" stripe v-loading="loading"
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
-                <el-table-column prop="id" label="id" width="80" />
+                <el-table-column prop="id" label="id" width="80" v-if="false" />
                 <el-table-column prop="name" label="证书名称" show-overflow-tooltip sortable="custom" width="180" />
                 <el-table-column prop="period" label="期限" />
                 <el-table-column fixed="right" label="操作" width="120">

@@ -4,10 +4,7 @@
         <el-main class="main">
             <el-row class="search">
                 <el-row class="search-item">
-                    <el-input v-model="userCertification.name" placeholder="姓名" clearable />
-                </el-row>
-                <el-row class="search-item">
-                    <el-input v-model="userCertification.name" placeholder="证书名称" clearable />
+                    <UserSelect @model="setModel" />
                 </el-row>
                 <el-button type="primary" @click="search">查询</el-button>
                 <el-button type="primary" @click="clear">重置</el-button>
@@ -25,9 +22,11 @@
             <el-table class="table" :data="tableData" stripe v-loading="loading"
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
-                <el-table-column prop="id" label="id" width="80" />
-                <el-table-column prop="name" label="证书名称" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="period" label="期限" />
+                <el-table-column prop="id" label="id" width="80" v-if="false" />
+                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+                <el-table-column prop="certification.name" label="证书名称" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="gotAt" label="获得时间" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="expiredAt" label="到期时间" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="edit(scope.row)">
@@ -49,17 +48,28 @@
         <el-form :model="userCertificationForm">
             <el-row :gutter="15">
                 <el-col :span="12">
-                    <el-form-item label="证书名称" prop="name">
-                        <el-input v-model="userCertificationForm.name" placeholder="请填写证书名称"
-                            :disabled="roleLevelBoolean"></el-input>
+                    <el-form-item label="姓名" prop="user.id">
+                        <UserSelect @model="setModel" :id="userCertificationForm.user.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                    <el-form-item label="期限" prop="period">
-                        <el-select v-model="userCertificationForm.period" placeholder="请选择期限" style="width: 240px">
-                            <el-option v-for="item in peroidOptions" :key="item.value" :label="item.label"
-                                :value="item.value" />
-                        </el-select>
+                    <el-form-item label="证书名称" prop="certification.name">
+                        <el-input v-model="userCertificationForm.certification.name" placeholder="请填写证书名称"
+                            :disabled="roleLevelBoolean"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row :gutter="15">
+                <el-col :span="12">
+                    <el-form-item label="获得时间" prop="gotAt">
+                        <el-date-picker v-model="userCertificationForm.gotAt" type="date" placeholder="请输入获得时间"
+                            @change="handleGotAtChange" />
+                    </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                    <el-form-item label="到期时间" prop="expiredAt">
+                        <el-date-picker v-model="userCertificationForm.expiredAt" type="date" placeholder="根据证书名称自动计算"
+                            disabled />
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -77,14 +87,15 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
 import userCertificationAPI from "@/api/UserCertification";
+import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
+import UserSelect from "@/components/userSelect.vue";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -102,18 +113,10 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
-const peroidOptions = [
-    { label: "无期限", value: -1 },
-    { label: "一个月", value: 30 },
-    { label: "三个月", value: 90 },
-    { label: "六个月", value: 180 },
-    { label: "一年", value: 365 },
-    { label: "两年", value: 730 },
-    { label: "三年", value: 1095 },
-    { label: "四年", value: 1460 },
-    { label: "五年", value: 1825 },
-    { label: "六年", value: 2190 },
-]
+const setModel = (value) => {
+    userCertification.value.user.id = value;
+}
+
 
 const editButtonText = computed(() => {
     if (store.roleLevel == 1) {
@@ -145,12 +148,17 @@ const userCertification = ref({
 });
 
 const userCertificationForm = ref({
+    id: "",
     user: {
-        id: ""
+        id: "",
+        name: ""
     },
     certification: {
-        id: ""
+        id: "",
+        name: "",
     },
+    expiredAt: "",
+    gotAt: "",
     version: ""
 });
 
@@ -183,7 +191,17 @@ const clear = () => {
 const resetForm = () => {
     userCertificationForm.value = {
         id: "",
-        name: "",
+        user: {
+            id: "",
+            name: ""
+        },
+        certification: {
+            id: "",
+            name: "",
+        },
+        expiredAt: "",
+        gotAt: "",
+        version: "",
         page: {
             pageNo: 1,
             pageSize: 20
@@ -199,7 +217,11 @@ const add = () => {
 
 const edit = (row) => {
     userCertificationForm.value.id = row.id;
-    userCertificationForm.value.name = row.name;
+    userCertificationForm.value.user.id = row.user.id;
+    userCertificationForm.value.certification.id = row.certification.id;
+    userCertificationForm.value.certification.name = row.certification.name;
+    userCertificationForm.value.gotAt = row.gotAt;
+    userCertificationForm.value.expiredAt = row.expiredAt;
     userCertificationForm.value.version = row.version;
     dialogVisible.value = true;
     dialogTitle.value = editButtonText.value + "证书";
@@ -234,7 +256,8 @@ const submit = () => {
         ElMessage.success("提交成功");
         dialogVisible.value = false;
         getList();
-    }).catch(() => {
+    }).catch((error) => {
+        console.log(error);
         ElMessage.error("提交失败");
     });
     submitButtonLoading.value = false;
@@ -243,7 +266,10 @@ const submit = () => {
 const getList = () => {
     loading.value = true;
     userCertificationAPI.getUserCertificationList(userCertification.value).then((res) => {
-        console.log(res);
+        res.data.page.list.map((item) => {
+            item.gotAt = formatDate(new Date(item.gotAt), 1)
+            item.expiredAt = formatDate(new Date(item.expiredAt), 1)
+        });
         store.setUserCertification(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
@@ -251,18 +277,13 @@ const getList = () => {
     });
 };
 
-const formatPeriod = (res) => {
-    res.data.page.list.map((item) => {
-        if (item.period == -1) {
-            item.period = "无期限";
-        } else if (item.period <= 365) {
-            item.period = `${item.period}天`;
-        } else if (item.period > 365) {
-            item.period = `${Math.floor(item.period / 365)}年`;
-        }
-    })
-    return res
-}
+const formatDate = (date, num, type) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + num).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
+};
+
 
 const refreshTable = () => {
     userCertification.value.page.pageNo = 1;
@@ -299,7 +320,17 @@ const handleSortChange = (column, prop, order) => {
     getList();
 }
 
-
+const handleGotAtChange = (value) => {
+    userCertificationForm.value.gotAt = formatDate(value, 1, 0);
+    certificationAPI.getCertificationList(userCertificationForm.value.certification).then((res) => {
+        let period = res.data.page.list[0].period;
+        if (period == -1) {
+            userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 1, 0)
+        } else {
+            userCertificationForm.value.expiredAt = formatDate(new Date(value.getTime() + period * 24 * 60 * 60 * 1000), 0)
+        }
+    });
+}
 </script>
 
 <style scoped>
