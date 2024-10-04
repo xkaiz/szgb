@@ -10,6 +10,15 @@ export default {
 		});
 	},
 
+	//根据id获取证书
+	getCertificationById(data) {
+		return request({
+			url: "/certification/get",
+			method: "post",
+			data: data,
+		});
+	},
+
 	//更新证书
 	save(data) {
 		return request({

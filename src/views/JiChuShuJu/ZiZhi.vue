@@ -4,7 +4,10 @@
         <el-main class="main">
             <el-row class="search">
                 <el-row class="search-item">
-                    <UserSelect @model="setModel" />
+                    <UserSelect ref="userSelectRef" @model="setModel" />
+                </el-row>
+                <el-row class="search-item">
+                    <CertificationSelect ref="certificationSelectRef" @model="setModel" />
                 </el-row>
                 <el-button type="primary" @click="search">查询</el-button>
                 <el-button type="primary" @click="clear">重置</el-button>
@@ -54,8 +57,8 @@
                 </el-col>
                 <el-col :span="12">
                     <el-form-item label="证书名称" prop="certification.name">
-                        <el-input v-model="userCertificationForm.certification.name" placeholder="请填写证书名称"
-                            :disabled="roleLevelBoolean"></el-input>
+                        <CertificationSelect @model="setModel" :id="userCertificationForm.certification.id"
+                            v-if="dialogVisible" @change="getCertificationList" />
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -96,6 +99,7 @@ import userCertificationAPI from "@/api/UserCertification";
 import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
 import UserSelect from "@/components/userSelect.vue";
+import CertificationSelect from "@/components/certificationSelect.vue";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -113,8 +117,12 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
+const userSelectRef = ref(null);
+const certificationSelectRef = ref(null);
+
 const setModel = (value) => {
-    userCertification.value.user.id = value;
+    userCertificationForm.value[value.type].id = value.id;
+    console.log(userCertificationForm.value);
 }
 
 
@@ -131,6 +139,15 @@ const roleLevelBoolean = computed(() => {
         return false;
     } else {
         return true;
+    }
+});
+
+const certification = ref({
+    name: "",
+    period: "",
+    page: {
+        pageNo: 1,
+        pageSize: 20
     }
 });
 
@@ -177,9 +194,15 @@ const search = () => {
 }
 
 const clear = () => {
+    userSelectRef.value.clear();
+    certificationSelectRef.value.clear();
     userCertification.value = {
-        id: "",
-        name: "",
+        user: {
+            id: ""
+        },
+        certification: {
+            id: ""
+        },
         page: {
             pageNo: 1,
             pageSize: 20
@@ -218,6 +241,7 @@ const add = () => {
 const edit = (row) => {
     userCertificationForm.value.id = row.id;
     userCertificationForm.value.user.id = row.user.id;
+    userCertificationForm.value.user.name = row.user.name;
     userCertificationForm.value.certification.id = row.certification.id;
     userCertificationForm.value.certification.name = row.certification.name;
     userCertificationForm.value.gotAt = row.gotAt;
@@ -250,6 +274,8 @@ const del = (row) => {
 }
 
 const submit = () => {
+    userCertificationForm.value.gotAt = formatDate(new Date(userCertificationForm.value.gotAt), 1, 0)
+    userCertificationForm.value.expiredAt = formatDate(new Date(userCertificationForm.value.expiredAt), 1, 0)
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
     userCertificationAPI.save(userCertificationForm.value).then((res) => {
@@ -322,14 +348,21 @@ const handleSortChange = (column, prop, order) => {
 
 const handleGotAtChange = (value) => {
     userCertificationForm.value.gotAt = formatDate(value, 1, 0);
-    certificationAPI.getCertificationList(userCertificationForm.value.certification).then((res) => {
-        let period = res.data.page.list[0].period;
-        if (period == -1) {
-            userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 1, 0)
-        } else {
-            userCertificationForm.value.expiredAt = formatDate(new Date(value.getTime() + period * 24 * 60 * 60 * 1000), 0)
-        }
-    });
+    getCertificationList()
+}
+
+const getCertificationList = () => {
+    if (userCertificationForm.value.gotAt != "") {
+        certificationAPI.getCertificationById(userCertificationForm.value.certification).then((res) => {
+            let period = res.data.data.period;
+            if (period == -1) {
+                userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 1, 0)
+            } else {
+                userCertificationForm.value.expiredAt = formatDate(new Date(new Date(userCertificationForm.value.gotAt).getTime() + period * 24 * 60 * 60 * 1000), 0, 0)
+            }
+        });
+    }
+
 }
 </script>
 

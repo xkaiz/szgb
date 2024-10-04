@@ -1,28 +1,25 @@
 <template>
-    <el-select v-model="userSelect.id" filterable remote reserve-keyword placeholder="请选择用户"
+    <el-select v-model="certificationSelect.id" filterable remote reserve-keyword placeholder="请选择证书"
         :remote-method="remoteMethod" :loading="loading" clearable @change="handelChange">
         <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
     </el-select>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import userAPI from '@/api/user'
+import { onMounted, ref, watch } from 'vue'
+import certificationAPI from '@/api/certification'
 
 const props = defineProps(["id"])
 const emit = defineEmits(["model"]);
 
-const userSelect = ref({
+const certificationSelect = ref({
     id: "",
 })
 const loading = ref(true);
 
-const user = ref({
-    username: "",
+const certification = ref({
     name: "",
-    department: {
-        id: "",
-    },
+    period: "",
     page: {
         pageNo: 1,
         pageSize: 20
@@ -31,21 +28,20 @@ const user = ref({
 
 onMounted(() => {
     if (props.id != undefined) {
-        userSelect.value.id = props.id;
+        certificationSelect.value.id = props.id;
     }
     getList();
 });
 
 const remoteMethod = (query) => {
-    user.value.name = query;
+    certification.value.name = query;
     getList();
 };
 const options = ref([]);
 const getList = () => {
     loading.value = true;
-    userAPI.getUserList(user.value).then((res) => {
+    certificationAPI.getCertificationList(certification.value).then((res) => {
         options.value = res.data.page.list;
-
         loading.value = false;
     }).catch((error) => {
         console.log(error);
@@ -53,12 +49,12 @@ const getList = () => {
 };
 
 const handelChange = (value) => {
-    emit("model", { type: "user", id: value });
+    emit("model", { type: "certification", id: value });
 };
 
 const clear = () => {
-    userSelect.value.id = "";
-};
+    certificationSelect.value.id = "";
+}
 defineExpose({
     clear
 })
