@@ -21,6 +21,9 @@
 				<el-row class="search-item">
 					<el-input v-model="user.name" placeholder="姓名" clearable />
 				</el-row>
+				<el-row class="search-item">
+					<el-input v-model="user.no" placeholder="工号" clearable />
+				</el-row>
 				<el-button type="primary" @click="search">查询</el-button>
 				<el-button type="primary" @click="clear">重置</el-button>
 			</el-row>
@@ -35,21 +38,12 @@
 				</el-button-group>
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
-				@selection-change="handleSelectionChange" @sort-change="handleSortChange"
-				@expand-change="handleExpandChange" row-key="id">
+				@selection-change="handleSelectionChange" @sort-change="handleSortChange" row-key="id">
 				<el-table-column type="selection" header-align="center" align="center" width="50" />
-				<!-- <el-table-column type="expand">
-					<template #default="props">
-						<el-table :data="props.row.certifications" border v-loading="certificationLoading">
-							<el-table-column label="证书名称" prop="certification.name" />
-							<el-table-column label="获得时间" prop="gotAt" />
-							<el-table-column label="到期时间" prop="expiredAt" />
-						</el-table>
-					</template>
-</el-table-column> -->
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
 				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
 				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+				<el-table-column prop="no" label="工号" show-overflow-tooltip sortable="custom" width="180" />
 				<el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
 				<el-table-column fixed="right" label="操作" width="120">
 					<template #default="scope">
@@ -71,23 +65,32 @@
 	<el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
 		<el-form :model="userForm">
 			<el-row :gutter="15">
-				<el-col :span="8">
+				<el-col :span="12">
 					<el-form-item label="用户名" prop="username">
 						<el-input v-model="userForm.username" placeholder="请填写用户名"
 							:disabled="usernameDisabled || roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
-				<el-col :span="8">
+				<el-col :span="12">
 					<el-form-item label="姓名" prop="name">
 						<el-input v-model="userForm.name" placeholder="请填写姓名" :disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
-				<el-col :span="8">
+
+			</el-row>
+			<el-row :gutter="15">
+				<el-col :span="12">
+					<el-form-item label="工号" prop="no">
+						<el-input v-model="userForm.no" placeholder="请填写工号" :disabled="roleLevelBoolean"></el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="12">
 					<el-form-item label="部门" prop="department">
 						<el-tree-select v-model="userForm.department.id" :data="store.departmentList"
 							:render-after-expand="false" filterable :disabled="roleLevelBoolean" />
 					</el-form-item>
 				</el-col>
+
 			</el-row>
 		</el-form>
 		<template #footer>
@@ -168,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, nextTick } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -180,37 +183,26 @@ import departmentAPI from "@/api/Department";
 import certificationAPI from "@/api/Certification";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { get } from "@vueuse/core";
 
 const treeRef = ref(null);
 const treeData = ref([]);
 const filterText = ref("");
 const tableData = ref([]);
+
+//加载状态
 const userLoading = ref(true);
 const certificationLoading = ref(true);
 const departmentLoading = ref(true);
-const pageNo = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
+const submitButtonLoading = ref(false);
 
+//组件显示
 const userDialogVisible = ref(false);
 const departmentDialogVisible = ref(false);
-const dialogTitle = ref("");
-
-const submitButtonLoading = ref(false);
-const submitButtonText = ref("提交");
-
-const usernameDisabled = ref(true);
-const deleteUserButtonDisabled = ref(true);
-const deleteDepartmentButtonDisabled = ref(true);
-
 const drawerVisible = ref(false);
 
-const userIDs = ref("");
-const departmentIDs = ref("");
-
-const expandedRows = ref([]);
-
+//文本变量
+const dialogTitle = ref("");
+const submitButtonText = ref("提交");
 const editButtonText = computed(() => {
 	if (store.roleLevel == 1) {
 		return "编辑";
@@ -219,6 +211,21 @@ const editButtonText = computed(() => {
 	}
 });
 
+//组件可用性
+const usernameDisabled = ref(true);
+const deleteUserButtonDisabled = ref(true);
+const deleteDepartmentButtonDisabled = ref(true);
+
+//用户和部门被多选选中的id
+const userIDs = ref("");
+const departmentIDs = ref("");
+
+//分页相关
+const pageNo = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
+
+//根据角色等级判断是否显示相关按钮
 const roleLevelBoolean = computed(() => {
 	if (store.roleLevel == 1) {
 		return false;
@@ -227,9 +234,11 @@ const roleLevelBoolean = computed(() => {
 	}
 });
 
+//用户查询
 const user = ref({
 	username: "",
 	name: "",
+	no: "",
 	department: {
 		id: "",
 	},
@@ -239,6 +248,7 @@ const user = ref({
 	}
 });
 
+//部门查询
 const department = ref({
 	page: {
 		pageNo: 1,
@@ -246,22 +256,13 @@ const department = ref({
 	}
 });
 
-const userCertification = ref({
-	user: {
-		id: "",
-	},
-	page: {
-		pageNo: 1,
-		pageSize: 20
-	}
-});
-
-
+//用户表单
 const userForm = ref({
 	user: user.value,
 	role: {}
 });
 
+//部门表单
 const departmentForm = ref({
 	id: "",
 	name: "",
@@ -295,39 +296,18 @@ onMounted(() => {
 
 });
 
-const handleExpandChange = (row, expandedRows) => {
-	userCertification.value.user.id = row.id;
-	if (expandedRows.length > 0) {
-		certificationAPI.getUserCertification(userCertification.value).then((res) => {
-			let user = {}
-			res.data.page.list.map((element) => {
-				user = store.userList.find((item) => item.id == element.user.id);
-				user.certifications = []
-				user.certifications.push(element);
-			});
-			store.userList.map((element) => {
-				if (element.id == user.id) {
-					element.certifications = user.certifications;
-					element.certifications.map((item) => {
-						item.gotAt = new Date(item.gotAt).toLocaleString();
-						item.expiredAt = new Date(item.expiredAt).toLocaleString();
-					});
-				}
-			});
-			certificationLoading.value = false;
-		});
-	}
-};
 
+//搜索
 const search = () => {
 	getUserList();
 }
-
+//清除搜索
 const clear = () => {
 	const departmentID = user.value.department.id;
 	user.value = {
 		username: "",
 		name: "",
+		no: "",
 		department: {
 			id: departmentID,
 		},
@@ -338,12 +318,13 @@ const clear = () => {
 	}
 	getUserList();
 }
-
+//表单重置
 const resetForm = () => {
 	userForm.value = {
 		id: "",
 		username: "",
 		name: "",
+		no: "",
 		department: {
 			id: "",
 		},
@@ -360,23 +341,25 @@ const resetForm = () => {
 	}
 }
 
+//新增用户
 const addUser = () => {
 	resetForm()
 	userDialogVisible.value = true;
 	dialogTitle.value = "新建用户";
 	usernameDisabled.value = false;
 }
-
+//编辑用户
 const editUser = (row) => {
 	userForm.value.id = row.id;
 	userForm.value.username = row.username;
 	userForm.value.name = row.name;
+	userForm.value.no = row.no;
 	userForm.value.department = row.department;
 	userForm.value.version = row.version;
 	userDialogVisible.value = true;
 	dialogTitle.value = editButtonText.value + "用户";
 }
-
+//删除用户
 const deleteUser = (row) => {
 	ElMessageBox.confirm("确定删除吗？", "提示", {
 		confirmButtonText: "确定",
@@ -402,12 +385,13 @@ const deleteUser = (row) => {
 	}).catch(() => { })
 }
 
+//新增部门
 const addDepartment = () => {
 	resetForm()
 	departmentDialogVisible.value = true;
 	dialogTitle.value = "新建部门";
 }
-
+//编辑部门
 const editDepartment = (row) => {
 	departmentForm.value.id = row.value;
 	departmentForm.value.name = row.label;
@@ -416,7 +400,7 @@ const editDepartment = (row) => {
 	departmentDialogVisible.value = true;
 	dialogTitle.value = editButtonText.value + "部门";
 }
-
+//删除部门
 const deleteDepartment = (node, data) => {
 	ElMessageBox.confirm("确定要删除吗？", "提示", {
 		confirmButtonText: "确定",
@@ -435,7 +419,6 @@ const deleteDepartment = (node, data) => {
 			treeChecked.value.forEach(item => {
 				treeRef.value.remove(item);
 			});
-			// getDepartmentList();
 		}).catch(() => {
 			ElMessage.error("删除失败");
 		});
@@ -444,7 +427,7 @@ const deleteDepartment = (node, data) => {
 	})
 }
 
-
+//提交新增、编辑
 const submit = (type) => {
 	submitButtonLoading.value = true;
 	submitButtonText.value = "提交中";
@@ -478,26 +461,7 @@ const submit = (type) => {
 	submitButtonText.value = "提交";
 }
 
-watch(filterText, (value) => {
-	treeRef.value.filter(value)
-})
-
-const filterNode = (value, data) => {
-	if (!value) return true
-	return data.label.includes(value)
-}
-const handleNodeClick = (data) => {
-	if (data.parent == "") {
-		user.value.department.id = ""
-		getUserList();
-	} else if (data.children.length == 0) {
-		user.value.page.pageNo = 1;
-		pageNo.value = 1;
-		user.value.department.id = data.value;
-		getUserList();
-	}
-};
-
+//获取用户列表
 const getUserList = () => {
 	userLoading.value = true;
 	userAPI.getUserList(user.value).then((res) => {
@@ -507,6 +471,7 @@ const getUserList = () => {
 	});
 };
 
+//获取部门列表
 const getDepartmentList = () => {
 	departmentLoading.value = true;
 	departmentAPI.getDepartmentList(department.value).then((res) => {
@@ -515,12 +480,14 @@ const getDepartmentList = () => {
 	});
 };
 
+//刷新表格
 const refreshTable = () => {
 	user.value.page.pageNo = 1;
 	pageNo.value = 1;
 	getUserList();
 };
 
+//处理每页大小变化
 const handleSizeChange = (value) => {
 	user.value.page.pageSize = value;
 	if (pageNo.value * value > total.value) {
@@ -529,17 +496,18 @@ const handleSizeChange = (value) => {
 	}
 	getUserList();
 };
-
+//处理页码变化
 const handleCurrentChange = (value) => {
 	user.value.page.pageNo = value;
 	getUserList();
 };
 
+//处理多选改变
 const handleSelectionChange = (value) => {
 	deleteUserButtonDisabled.value = value.length == 0;
 	userIDs.value = value.map((item) => item.id).join(",");
 }
-
+//处理排序改变
 const handleSortChange = (column, prop, order) => {
 	if (column.order != null) {
 		column.order = column.order.replace(/ending/, "");
@@ -551,6 +519,28 @@ const handleSortChange = (column, prop, order) => {
 }
 
 const treeChecked = ref([])
+//处理树节点点击
+const handleNodeClick = (data) => {
+	if (data.parent == "") {
+		user.value.department.id = ""
+		getUserList();
+	} else if (data.children.length == 0) {
+		user.value.page.pageNo = 1;
+		pageNo.value = 1;
+		user.value.department.id = data.value;
+		getUserList();
+	}
+};
+//树筛选
+const filterNode = (value, data) => {
+	if (!value) return true
+	return data.label.includes(value)
+}
+//树筛选文本监听
+watch(filterText, (value) => {
+	treeRef.value.filter(value)
+})
+//处理树节点选中
 const handleCheckChange = (data) => {
 	if (data.children.length > 0 && node) {
 		ElMessage.warning("无法删除当前包含子节点的部门，请先删除子部门");

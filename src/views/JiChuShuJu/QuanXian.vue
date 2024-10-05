@@ -79,7 +79,6 @@ import useStore from "@/store/index";
 const store = useStore();
 
 import userRoleAPI from "@/api/UserRole";
-import roleAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
 import UserSelect from "@/components/UserSelect.vue";
 import RoleSelect from "@/components/RoleSelect.vue";
