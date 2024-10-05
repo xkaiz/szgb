@@ -4,10 +4,10 @@
         <el-main class="main">
             <el-row class="search">
                 <el-row class="search-item">
-                    <el-input v-model="userRole.name" placeholder="姓名" clearable />
+                    <UserSelect ref="userSelectRef" @model="setModel" />
                 </el-row>
                 <el-row class="search-item">
-                    <el-input v-model="userRole.name" placeholder="证书名称" clearable />
+                    <RoleSelect ref="roleSelectRef" @model="setModel" />
                 </el-row>
                 <el-button type="primary" @click="search">查询</el-button>
                 <el-button type="primary" @click="clear">重置</el-button>
@@ -25,9 +25,9 @@
             <el-table class="table" :data="tableData" stripe v-loading="loading"
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
-                <el-table-column prop="id" label="id" width="80" />
-                <el-table-column prop="name" label="证书名称" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="period" label="期限" />
+                <el-table-column prop="id" label="id" width="80" v-if="false" />
+                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+                <el-table-column prop="role.name" label="角色名称" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="edit(scope.row)">
@@ -49,17 +49,13 @@
         <el-form :model="userRoleForm">
             <el-row :gutter="15">
                 <el-col :span="12">
-                    <el-form-item label="证书名称" prop="name">
-                        <el-input v-model="userRoleForm.name" placeholder="请填写证书名称"
-                            :disabled="roleLevelBoolean"></el-input>
+                    <el-form-item label="姓名" prop="user.id">
+                        <UserSelect @model="setModel" :id="userRoleForm.user.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                    <el-form-item label="期限" prop="period">
-                        <el-select v-model="userRoleForm.period" placeholder="请选择期限" style="width: 240px">
-                            <el-option v-for="item in peroidOptions" :key="item.value" :label="item.label"
-                                :value="item.value" />
-                        </el-select>
+                    <el-form-item label="角色名称" prop="role.name">
+                        <RoleSelect @model="setModel" :id="userRoleForm.role.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -77,14 +73,16 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
 import userRoleAPI from "@/api/UserRole";
+import roleAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
+import UserSelect from "@/components/UserSelect.vue";
+import RoleSelect from "@/components/RoleSelect.vue";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -102,18 +100,14 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
-const peroidOptions = [
-    { label: "无期限", value: -1 },
-    { label: "一个月", value: 30 },
-    { label: "三个月", value: 90 },
-    { label: "六个月", value: 180 },
-    { label: "一年", value: 365 },
-    { label: "两年", value: 730 },
-    { label: "三年", value: 1095 },
-    { label: "四年", value: 1460 },
-    { label: "五年", value: 1825 },
-    { label: "六年", value: 2190 },
-]
+const userSelectRef = ref(null);
+const roleSelectRef = ref(null);
+
+const setModel = (value) => {
+    userRoleForm.value[value.type].id = value.id;
+    console.log(userRoleForm.value);
+}
+
 
 const editButtonText = computed(() => {
     if (store.roleLevel == 1) {
@@ -131,27 +125,21 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const userRole = ref({
+const userRoleForm = ref({
+    id: "",
     user: {
-        id: ""
+        id: "",
+        name: ""
     },
     role: {
-        id: ""
+        id: "",
+        name: "",
     },
+    version: "",
     page: {
         pageNo: 1,
         pageSize: 20
     }
-});
-
-const userRoleForm = ref({
-    user: {
-        id: ""
-    },
-    role: {
-        id: ""
-    },
-    version: ""
 });
 
 
@@ -169,21 +157,24 @@ const search = () => {
 }
 
 const clear = () => {
-    userRole.value = {
-        id: "",
-        name: "",
-        page: {
-            pageNo: 1,
-            pageSize: 20
-        }
-    }
+    userSelectRef.value.clear();
+    roleSelectRef.value.clear();
+    resetForm();
     getList();
 }
 
 const resetForm = () => {
     userRoleForm.value = {
         id: "",
-        name: "",
+        user: {
+            id: "",
+            name: ""
+        },
+        role: {
+            id: "",
+            name: "",
+        },
+        version: "",
         page: {
             pageNo: 1,
             pageSize: 20
@@ -194,15 +185,20 @@ const resetForm = () => {
 const add = () => {
     resetForm()
     dialogVisible.value = true;
-    dialogTitle.value = "新建证书";
+    dialogTitle.value = "新建用户权限";
 }
 
 const edit = (row) => {
     userRoleForm.value.id = row.id;
-    userRoleForm.value.name = row.name;
+    userRoleForm.value.user.id = row.user.id;
+    userRoleForm.value.user.name = row.user.name;
+    userRoleForm.value.role.id = row.role.id;
+    userRoleForm.value.role.name = row.role.name;
+    userRoleForm.value.gotAt = row.gotAt;
+    userRoleForm.value.expiredAt = row.expiredAt;
     userRoleForm.value.version = row.version;
     dialogVisible.value = true;
-    dialogTitle.value = editButtonText.value + "证书";
+    dialogTitle.value = editButtonText.value + "用户权限";
 }
 
 const del = (row) => {
@@ -234,7 +230,8 @@ const submit = () => {
         ElMessage.success("提交成功");
         dialogVisible.value = false;
         getList();
-    }).catch(() => {
+    }).catch((error) => {
+        console.log(error);
         ElMessage.error("提交失败");
     });
     submitButtonLoading.value = false;
@@ -242,9 +239,8 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    userRoleAPI.getUserRoleList(userRole.value).then((res) => {
-        console.log(res);
-        store.setUserCertification(res.data.page.list);
+    userRoleAPI.getUserRoleList(userRoleForm.value).then((res) => {
+        store.setUserRole(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
         loading.value = false;
@@ -252,7 +248,7 @@ const getList = () => {
 };
 
 const refreshTable = () => {
-    userRole.value.page.pageNo = 1;
+    userRoleForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };
@@ -285,8 +281,6 @@ const handleSortChange = (column, prop, order) => {
     }
     getList();
 }
-
-
 </script>
 
 <style scoped>

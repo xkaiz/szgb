@@ -98,8 +98,8 @@ const store = useStore();
 import userCertificationAPI from "@/api/UserCertification";
 import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
-import UserSelect from "@/components/userSelect.vue";
-import CertificationSelect from "@/components/certificationSelect.vue";
+import UserSelect from "@/components/UserSelect.vue";
+import CertificationSelect from "@/components/CertificationSelect.vue";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -142,28 +142,6 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const certification = ref({
-    name: "",
-    period: "",
-    page: {
-        pageNo: 1,
-        pageSize: 20
-    }
-});
-
-const userCertification = ref({
-    user: {
-        id: ""
-    },
-    certification: {
-        id: ""
-    },
-    page: {
-        pageNo: 1,
-        pageSize: 20
-    }
-});
-
 const userCertificationForm = ref({
     id: "",
     user: {
@@ -176,7 +154,11 @@ const userCertificationForm = ref({
     },
     expiredAt: "",
     gotAt: "",
-    version: ""
+    version: "",
+    page: {
+        pageNo: 1,
+        pageSize: 20
+    }
 });
 
 
@@ -196,18 +178,7 @@ const search = () => {
 const clear = () => {
     userSelectRef.value.clear();
     certificationSelectRef.value.clear();
-    userCertification.value = {
-        user: {
-            id: ""
-        },
-        certification: {
-            id: ""
-        },
-        page: {
-            pageNo: 1,
-            pageSize: 20
-        }
-    }
+    resetForm();
     getList();
 }
 
@@ -235,7 +206,7 @@ const resetForm = () => {
 const add = () => {
     resetForm()
     dialogVisible.value = true;
-    dialogTitle.value = "新建证书";
+    dialogTitle.value = "新建用户资质";
 }
 
 const edit = (row) => {
@@ -248,7 +219,7 @@ const edit = (row) => {
     userCertificationForm.value.expiredAt = row.expiredAt;
     userCertificationForm.value.version = row.version;
     dialogVisible.value = true;
-    dialogTitle.value = editButtonText.value + "证书";
+    dialogTitle.value = editButtonText.value + "用户资质";
 }
 
 const del = (row) => {
@@ -291,7 +262,7 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    userCertificationAPI.getUserCertificationList(userCertification.value).then((res) => {
+    userCertificationAPI.getUserCertificationList(userCertificationForm.value).then((res) => {
         res.data.page.list.map((item) => {
             item.gotAt = formatDate(new Date(item.gotAt), 1)
             item.expiredAt = formatDate(new Date(item.expiredAt), 1)
@@ -312,7 +283,7 @@ const formatDate = (date, num, type) => {
 
 
 const refreshTable = () => {
-    userCertification.value.page.pageNo = 1;
+    userCertificationForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };

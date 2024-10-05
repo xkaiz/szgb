@@ -10,6 +10,15 @@ export default {
 		});
 	},
 
+	//根据id获得角色
+	getRoleById(data) {
+		return request({
+			url: "/sys/role/get",
+			method: "get",
+			params: data,
+		});
+	},
+
 	//更新角色
 	save(data) {
 		return request({

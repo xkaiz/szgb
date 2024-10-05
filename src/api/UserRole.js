@@ -12,7 +12,7 @@ export default {
 	//更新证书
 	save(data) {
 		return request({
-			url: "/userRole/save",
+			url: "/sys/userRole/save",
 			method: "post",
 			data: data,
 		});
@@ -21,7 +21,7 @@ export default {
 	//删除证书
 	delete(ids) {
 		return request({
-			url: "/userRole/delete",
+			url: "/sys/userRole/delete",
 			method: "delete",
 			params: { ids: ids },
 		});
