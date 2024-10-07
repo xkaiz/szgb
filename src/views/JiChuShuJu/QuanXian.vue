@@ -26,7 +26,7 @@
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip width="180" sortable="custom" />
                 <el-table-column prop="role.name" label="角色名称" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
@@ -137,7 +137,8 @@ const userRoleForm = ref({
     version: "",
     page: {
         pageNo: 1,
-        pageSize: 20
+        pageSize: 20,
+        orderBy: ""
     }
 });
 
@@ -176,7 +177,8 @@ const resetForm = () => {
         version: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
 }
@@ -246,39 +248,61 @@ const getList = () => {
     });
 };
 
+//刷新表格
 const refreshTable = () => {
     userRoleForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };
 
+//处理每页大小变化
 const handleSizeChange = (value) => {
-    user.value.page.pageSize = value;
+    userRoleForm.value.page.pageSize = value;
     if (pageNo.value * value > total.value) {
         pageNo.value = Math.ceil(total.value / value);
-        user.value.page.pageNo = pageNo.value;
+        userRoleForm.value.page.pageNo = pageNo.value;
     }
     getList();
 };
 
+//处理页码改变
 const handleCurrentChange = (value) => {
-    user.value.page.pageNo = value;
+    userRoleForm.value.page.pageNo = value;
     getList();
 };
 
+//处理多选改变
 const handleSelectionChange = (value) => {
     deleteButtonDisabled.value = value.length == 0;
     IDs.value = value.map((item) => item.id).join(",");
 }
 
+//处理排序改变
 const handleSortChange = (column, prop, order) => {
     if (column.order != null) {
+        if (getTextType(column.prop) == "CamelCase") {
+            column.prop = column.prop.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+        } else if (getTextType(column.prop) == "DotSeparated") {
+            column.prop = `${column.prop.split('.')[0][0]}.${column.prop.split('.')[1]}`
+        }
         column.order = column.order.replace(/ending/, "");
-        user.value.page.orderBy = `${column.prop} ${column.order}`;
+        userRoleForm.value.page.orderBy = `${column.prop} ${column.order}`;
     } else {
-        user.value.page.orderBy = ""
+        userRoleForm.value.page.orderBy = ""
     }
     getList();
+}
+
+//获取文本类型
+const getTextType = (value) => {
+    const camelCaseRegex = /^[a-z]+([A-Z][a-z]*)*$/;
+    const dotSeparatedRegex = /^[a-z]+(\.[a-z]+)*$/;
+
+    if (camelCaseRegex.test(value)) {
+        return 'CamelCase';
+    } else if (dotSeparatedRegex.test(value)) {
+        return 'DotSeparated';
+    }
 }
 </script>
 

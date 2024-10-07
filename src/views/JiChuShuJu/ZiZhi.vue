@@ -26,7 +26,7 @@
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
+                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip width="180" sortable="custom" />
                 <el-table-column prop="certification.name" label="证书名称" show-overflow-tooltip sortable="custom" />
                 <el-table-column prop="gotAt" label="获得时间" show-overflow-tooltip sortable="custom" />
                 <el-table-column prop="expiredAt" label="到期时间" show-overflow-tooltip sortable="custom" />
@@ -157,7 +157,8 @@ const userCertificationForm = ref({
     version: "",
     page: {
         pageNo: 1,
-        pageSize: 20
+        pageSize: 20,
+        orderBy: ""
     }
 });
 
@@ -198,7 +199,8 @@ const resetForm = () => {
         version: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
 }
@@ -289,16 +291,16 @@ const refreshTable = () => {
 };
 
 const handleSizeChange = (value) => {
-    user.value.page.pageSize = value;
+    userCertificationForm.value.page.pageSize = value;
     if (pageNo.value * value > total.value) {
         pageNo.value = Math.ceil(total.value / value);
-        user.value.page.pageNo = pageNo.value;
+        userCertificationForm.value.page.pageNo = pageNo.value;
     }
     getList();
 };
 
 const handleCurrentChange = (value) => {
-    user.value.page.pageNo = value;
+    userCertificationForm.value.page.pageNo = value;
     getList();
 };
 
@@ -309,12 +311,30 @@ const handleSelectionChange = (value) => {
 
 const handleSortChange = (column, prop, order) => {
     if (column.order != null) {
+        if (getTextType(column.prop) == "CamelCase") {
+            column.prop = column.prop.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+        } else if (getTextType(column.prop) == "DotSeparated") {
+            column.prop = `${column.prop.split('.')[0][0]}.${column.prop.split('.')[1]}`
+        }
         column.order = column.order.replace(/ending/, "");
-        user.value.page.orderBy = `${column.prop} ${column.order}`;
+        userCertificationForm.value.page.orderBy = `${column.prop} ${column.order}`;
     } else {
-        user.value.page.orderBy = ""
+        userCertificationForm.value.page.orderBy = ""
     }
+    console.log(userCertificationForm.value);
     getList();
+}
+
+
+const getTextType = (value) => {
+    const camelCaseRegex = /^[a-z]+([A-Z][a-z]*)*$/;
+    const dotSeparatedRegex = /^[a-z]+(\.[a-z]+)*$/;
+
+    if (camelCaseRegex.test(value)) {
+        return 'CamelCase';
+    } else if (dotSeparatedRegex.test(value)) {
+        return 'DotSeparated';
+    }
 }
 
 const handleGotAtChange = (value) => {

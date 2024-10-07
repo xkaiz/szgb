@@ -24,7 +24,7 @@
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
                 <el-table-column prop="name" label="证书名称" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="period" label="期限" />
+                <el-table-column prop="period" label="期限" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="edit(scope.row)">
@@ -133,7 +133,8 @@ const certification = ref({
     period: "",
     page: {
         pageNo: 1,
-        pageSize: 20
+        pageSize: 20,
+        orderBy: ""
     }
 });
 
@@ -164,7 +165,8 @@ const clear = () => {
         name: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
     getList();
@@ -176,7 +178,8 @@ const resetForm = () => {
         name: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
 }
@@ -230,6 +233,8 @@ const submit = () => {
     submitButtonLoading.value = false;
     submitButtonText.value = "提交";
 }
+
+//获取证书列表
 const getList = () => {
     loading.value = true;
     certificationAPI.getCertificationList(certification.value).then((res) => {
@@ -241,6 +246,7 @@ const getList = () => {
     });
 };
 
+//格式化期限
 const formatPeriod = (res) => {
     res.data.page.list.map((item) => {
         if (item.period == -1) {
@@ -254,37 +260,42 @@ const formatPeriod = (res) => {
     return res
 }
 
+//刷新表格
 const refreshTable = () => {
     certification.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };
 
+//处理每页大小变化
 const handleSizeChange = (value) => {
-    user.value.page.pageSize = value;
+    certification.value.page.pageSize = value;
     if (pageNo.value * value > total.value) {
         pageNo.value = Math.ceil(total.value / value);
-        user.value.page.pageNo = pageNo.value;
+        certification.value.page.pageNo = pageNo.value;
     }
     getList();
 };
 
+//处理页码改变
 const handleCurrentChange = (value) => {
-    user.value.page.pageNo = value;
+    certification.value.page.pageNo = value;
     getList();
 };
 
+//处理多选改变
 const handleSelectionChange = (value) => {
     deleteButtonDisabled.value = value.length == 0;
     IDs.value = value.map((item) => item.id).join(",");
 }
 
+//处理排序改变
 const handleSortChange = (column, prop, order) => {
     if (column.order != null) {
         column.order = column.order.replace(/ending/, "");
-        user.value.page.orderBy = `${column.prop} ${column.order}`;
+        certification.value.page.orderBy = `${column.prop} ${column.order}`;
     } else {
-        user.value.page.orderBy = ""
+        certification.value.page.orderBy = ""
     }
     getList();
 }

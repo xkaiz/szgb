@@ -105,7 +105,8 @@ const role = ref({
     name: "",
     page: {
         pageNo: 1,
-        pageSize: 20
+        pageSize: 20,
+        orderBy: ""
     }
 });
 
@@ -135,7 +136,8 @@ const clear = () => {
         name: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
     getRoleList();
@@ -147,7 +149,8 @@ const resetForm = () => {
         name: "",
         page: {
             pageNo: 1,
-            pageSize: 20
+            pageSize: 20,
+            orderBy: ""
         }
     }
 }
@@ -211,37 +214,42 @@ const getRoleList = () => {
     });
 };
 
+//刷新表格
 const refreshTable = () => {
     role.value.page.pageNo = 1;
     pageNo.value = 1;
     getRoleList();
 };
 
+//处理每页大小变化
 const handleSizeChange = (value) => {
-    user.value.page.pageSize = value;
+    role.value.page.pageSize = value;
     if (pageNo.value * value > total.value) {
         pageNo.value = Math.ceil(total.value / value);
-        user.value.page.pageNo = pageNo.value;
+        role.value.page.pageNo = pageNo.value;
     }
     getRoleList();
 };
 
+//处理页码改变
 const handleCurrentChange = (value) => {
-    user.value.page.pageNo = value;
+    role.value.page.pageNo = value;
     getRoleList();
 };
 
+//处理多选改变
 const handleSelectionChange = (value) => {
     deleteRoleButtonDisabled.value = value.length == 0;
     roleIDs.value = value.map((item) => item.id).join(",");
 }
 
+//处理排序改变
 const handleSortChange = (column, prop, order) => {
     if (column.order != null) {
         column.order = column.order.replace(/ending/, "");
-        user.value.page.orderBy = `${column.prop} ${column.order}`;
+        role.value.page.orderBy = `${column.prop} ${column.order}`;
     } else {
-        user.value.page.orderBy = ""
+        role.value.page.orderBy = ""
     }
     getRoleList();
 }

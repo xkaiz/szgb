@@ -216,6 +216,9 @@ const usernameDisabled = ref(true);
 const deleteUserButtonDisabled = ref(true);
 const deleteDepartmentButtonDisabled = ref(true);
 
+//部门树相关
+const treeChecked = ref([])
+
 //用户和部门被多选选中的id
 const userIDs = ref("");
 const departmentIDs = ref("");
@@ -224,6 +227,7 @@ const departmentIDs = ref("");
 const pageNo = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
+
 
 //根据角色等级判断是否显示相关按钮
 const roleLevelBoolean = computed(() => {
@@ -244,7 +248,8 @@ const user = ref({
 	},
 	page: {
 		pageNo: 1,
-		pageSize: 20
+		pageSize: 20,
+		orderBy: ""
 	}
 });
 
@@ -252,7 +257,8 @@ const user = ref({
 const department = ref({
 	page: {
 		pageNo: 1,
-		pageSize: 20
+		pageSize: 20,
+		orderBy: ""
 	}
 });
 
@@ -296,6 +302,39 @@ onMounted(() => {
 
 });
 
+//处理部门树节点点击
+const handleNodeClick = (data) => {
+	if (data.parent == "") {
+		user.value.department.id = ""
+		getUserList();
+	} else if (data.children.length == 0) {
+		user.value.page.pageNo = 1;
+		pageNo.value = 1;
+		user.value.department.id = data.value;
+		getUserList();
+	}
+};
+//部门树筛选
+const filterNode = (value, data) => {
+	if (!value) return true
+	return data.label.includes(value)
+}
+//部门树筛选文本监听
+watch(filterText, (value) => {
+	treeRef.value.filter(value)
+})
+//处理部门树节点选中
+const handleCheckChange = (data) => {
+	if (data.children.length > 0 && node) {
+		ElMessage.warning("无法删除当前包含子节点的部门，请先删除子部门");
+		return
+	}
+	const node = treeRef.value.getCheckedNodes(false, false)
+	treeChecked.value = node
+	departmentIDs.value = treeChecked.value.map((item) => item.value).join(",");
+	deleteDepartmentButtonDisabled.value = (treeChecked.value.length == 0);
+}
+
 
 //搜索
 const search = () => {
@@ -313,7 +352,8 @@ const clear = () => {
 		},
 		page: {
 			pageNo: 1,
-			pageSize: 20
+			pageSize: 20,
+			orderBy: ""
 		}
 	}
 	getUserList();
@@ -496,7 +536,7 @@ const handleSizeChange = (value) => {
 	}
 	getUserList();
 };
-//处理页码变化
+//处理页码改变
 const handleCurrentChange = (value) => {
 	user.value.page.pageNo = value;
 	getUserList();
@@ -510,6 +550,11 @@ const handleSelectionChange = (value) => {
 //处理排序改变
 const handleSortChange = (column, prop, order) => {
 	if (column.order != null) {
+		if (getTextType(column.prop) == "CamelCase") {
+			column.prop = column.prop.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
+		} else if (getTextType(column.prop) == "DotSeparated") {
+			column.prop = `${column.prop.split('.')[0][0]}.${column.prop.split('.')[1]}`
+		}
 		column.order = column.order.replace(/ending/, "");
 		user.value.page.orderBy = `${column.prop} ${column.order}`;
 	} else {
@@ -518,38 +563,16 @@ const handleSortChange = (column, prop, order) => {
 	getUserList();
 }
 
-const treeChecked = ref([])
-//处理树节点点击
-const handleNodeClick = (data) => {
-	if (data.parent == "") {
-		user.value.department.id = ""
-		getUserList();
-	} else if (data.children.length == 0) {
-		user.value.page.pageNo = 1;
-		pageNo.value = 1;
-		user.value.department.id = data.value;
-		getUserList();
+//获取文本类型
+const getTextType = (value) => {
+	const camelCaseRegex = /^[a-z]+([A-Z][a-z]*)*$/;
+	const dotSeparatedRegex = /^[a-z]+(\.[a-z]+)*$/;
+
+	if (camelCaseRegex.test(value)) {
+		return 'CamelCase';
+	} else if (dotSeparatedRegex.test(value)) {
+		return 'DotSeparated';
 	}
-};
-//树筛选
-const filterNode = (value, data) => {
-	if (!value) return true
-	return data.label.includes(value)
-}
-//树筛选文本监听
-watch(filterText, (value) => {
-	treeRef.value.filter(value)
-})
-//处理树节点选中
-const handleCheckChange = (data) => {
-	if (data.children.length > 0 && node) {
-		ElMessage.warning("无法删除当前包含子节点的部门，请先删除子部门");
-		return
-	}
-	const node = treeRef.value.getCheckedNodes(false, false)
-	treeChecked.value = node
-	departmentIDs.value = treeChecked.value.map((item) => item.value).join(",");
-	deleteDepartmentButtonDisabled.value = (treeChecked.value.length == 0);
 }
 
 </script>
