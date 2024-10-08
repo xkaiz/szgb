@@ -2,7 +2,7 @@ import request from "@/utils/Request";
 
 export default {
 	//获取证书列表
-	getCertificationList(data) {
+	list(data) {
 		return request({
 			url: "/certification/list",
 			method: "post",
@@ -11,7 +11,7 @@ export default {
 	},
 
 	//根据id获取证书
-	getCertificationById(data) {
+	getById(data) {
 		return request({
 			url: "/certification/get",
 			method: "post",

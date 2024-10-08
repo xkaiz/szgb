@@ -40,7 +40,7 @@ const remoteMethod = (query) => {
 const options = ref([]);
 const getList = () => {
     loading.value = true;
-    certificationAPI.getCertificationList(certification.value).then((res) => {
+    certificationAPI.list(certification.value).then((res) => {
         options.value = res.data.page.list;
         loading.value = false;
     }).catch((error) => {

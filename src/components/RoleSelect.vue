@@ -40,7 +40,7 @@ const remoteMethod = (query) => {
 const options = ref([]);
 const getList = () => {
     loading.value = true;
-    roleAPI.getRoleList(role.value).then((res) => {
+    roleAPI.list(role.value).then((res) => {
         options.value = res.data.page.list;
         loading.value = false;
     }).catch((error) => {

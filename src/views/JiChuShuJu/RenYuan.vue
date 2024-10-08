@@ -39,12 +39,13 @@
 			</el-row>
 			<el-table class="table" :data="tableData" stripe v-loading="userLoading"
 				@selection-change="handleSelectionChange" @sort-change="handleSortChange" row-key="id">
-				<el-table-column type="selection" header-align="center" align="center" width="50" />
+				<el-table-column type="selection" header-align="center" align="center" />
 				<el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
-				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" width="180" />
-				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
-				<el-table-column prop="no" label="工号" show-overflow-tooltip sortable="custom" width="180" />
+				<el-table-column prop="username" label="用户名" show-overflow-tooltip sortable="custom" />
+				<el-table-column prop="name" label="姓名" show-overflow-tooltip sortable="custom" />
+				<el-table-column prop="no" label="工号" show-overflow-tooltip sortable="custom" />
 				<el-table-column prop="department.name" label="部门" show-overflow-tooltip sortable="custom" />
+				<el-table-column prop="phone" label="手机号" show-overflow-tooltip sortable="custom" />
 				<el-table-column fixed="right" label="操作" width="120">
 					<template #default="scope">
 						<el-button link type="primary" size="small" @click="editUser(scope.row)">
@@ -285,18 +286,19 @@ onMounted(() => {
 		return
 	}
 	Promise.all([
-		userAPI.getUserList(user.value).then((res) => {
+		userAPI.list(user.value).then((res) => {
 			res.data.page.list.count = res.data.page.count;
 			store.setUserList(res.data.page.list);
 			userLoading.value = false;
 		}),
-		departmentAPI.getDepartmentList(department.value).then((res) => {
+		departmentAPI.list(department.value).then((res) => {
 			store.setDepartmentList(buildTree(res.data.page.list));
 			departmentLoading.value = false;
 		}),
 	]).then(() => {
 		total.value = store.userList.count;
 		tableData.value = store.userList;
+		console.log(store.userList);
 		treeData.value = store.departmentList;
 	});
 
@@ -492,7 +494,7 @@ const submit = (type) => {
 				ElMessage.success("新建部门成功");
 			}
 			departmentDialogVisible.value = false;
-			getDepartmentList();
+			list();
 		}).catch((error) => {
 			console.log(error);
 		})
@@ -504,7 +506,7 @@ const submit = (type) => {
 //获取用户列表
 const getUserList = () => {
 	userLoading.value = true;
-	userAPI.getUserList(user.value).then((res) => {
+	userAPI.list(user.value).then((res) => {
 		tableData.value = res.data.page.list
 		total.value = res.data.page.count;
 		userLoading.value = false;
@@ -512,9 +514,9 @@ const getUserList = () => {
 };
 
 //获取部门列表
-const getDepartmentList = () => {
+const list = () => {
 	departmentLoading.value = true;
-	departmentAPI.getDepartmentList(department.value).then((res) => {
+	departmentAPI.list(department.value).then((res) => {
 		treeData.value = buildTree(res.data.page.list);
 		departmentLoading.value = false;
 	});

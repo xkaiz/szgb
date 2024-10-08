@@ -43,7 +43,7 @@ const remoteMethod = (query) => {
 const options = ref([]);
 const getList = () => {
     loading.value = true;
-    userAPI.getUserList(user.value).then((res) => {
+    userAPI.list(user.value).then((res) => {
         options.value = res.data.page.list;
 
         loading.value = false;

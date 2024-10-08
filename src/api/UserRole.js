@@ -2,7 +2,7 @@ import request from "@/utils/Request";
 
 export default {
 	//获取用户角色列表
-	getUserRoleList(data) {
+	list(data) {
 		return request({
 			url: "/sys/userRole/list",
 			method: "post",

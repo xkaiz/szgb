@@ -11,7 +11,7 @@ export default {
 	},
 
 	//获得用户列表
-	getUserList(data) {
+	list(data) {
 		return request({
 			url: "/sys/user/list",
 			method: "post",

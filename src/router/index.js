@@ -14,12 +14,6 @@ const routes = [
 		hidden: true,
 	},
 	{
-		path: "/test",
-		component: () => import("@/views/Test.vue"),
-		meta: { title: "测试" },
-		hidden: true,
-	},
-	{
 		path: "/home",
 		component: Layout,
 		name: "home",

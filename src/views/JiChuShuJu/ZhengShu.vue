@@ -237,7 +237,7 @@ const submit = () => {
 //获取证书列表
 const getList = () => {
     loading.value = true;
-    certificationAPI.getCertificationList(certification.value).then((res) => {
+    certificationAPI.list(certification.value).then((res) => {
         res = formatPeriod(res)
         store.setCertification(res.data.page.list);
         total.value = res.data.page.count;

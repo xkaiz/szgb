@@ -240,7 +240,7 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    userRoleAPI.getUserRoleList(userRoleForm.value).then((res) => {
+    userRoleAPI.list(userRoleForm.value).then((res) => {
         store.setUserRole(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;

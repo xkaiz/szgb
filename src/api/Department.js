@@ -2,7 +2,7 @@ import request from "@/utils/Request";
 
 export default {
 	//获取部门列表
-	getDepartmentList(data) {
+	list(data) {
 		return request({
 			url: "/sys/department/list",
 			method: "post",

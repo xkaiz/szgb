@@ -2,7 +2,7 @@ import request from "@/utils/Request";
 
 export default {
 	//获得用户证书列表
-	getUserCertificationList(data) {
+	list(data) {
 		return request({
 			url: "/userCertification/list",
 			method: "post",

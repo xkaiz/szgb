@@ -58,7 +58,7 @@
                 <el-col :span="12">
                     <el-form-item label="证书名称" prop="certification.name">
                         <CertificationSelect @model="setModel" :id="userCertificationForm.certification.id"
-                            v-if="dialogVisible" @change="getCertificationList" />
+                            v-if="dialogVisible" @change="list" />
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -264,7 +264,7 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    userCertificationAPI.getUserCertificationList(userCertificationForm.value).then((res) => {
+    userCertificationAPI.list(userCertificationForm.value).then((res) => {
         res.data.page.list.map((item) => {
             item.gotAt = formatDate(new Date(item.gotAt), 1)
             item.expiredAt = formatDate(new Date(item.expiredAt), 1)
@@ -339,12 +339,12 @@ const getTextType = (value) => {
 
 const handleGotAtChange = (value) => {
     userCertificationForm.value.gotAt = formatDate(value, 1, 0);
-    getCertificationList()
+    list()
 }
 
-const getCertificationList = () => {
+const list = () => {
     if (userCertificationForm.value.gotAt != "") {
-        certificationAPI.getCertificationById(userCertificationForm.value.certification).then((res) => {
+        certificationAPI.getById(userCertificationForm.value.certification).then((res) => {
             let period = res.data.data.period;
             if (period == -1) {
                 userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 1, 0)

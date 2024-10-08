@@ -98,7 +98,7 @@ const handleLogin = () => {
 const getUserRole = (user) => {
     userRole.value.user.id = user.id;
     Promise.all([
-        userRoleAPI.getUserRoleList(userRole.value).then((res) => {
+        userRoleAPI.list(userRole.value).then((res) => {
             user.role = res.data.page.list.map((item) => {
                 return { id: item.role.id, name: item.role.name };
             });
