@@ -298,7 +298,6 @@ onMounted(() => {
 	]).then(() => {
 		total.value = store.userList.count;
 		tableData.value = store.userList;
-		console.log(store.userList);
 		treeData.value = store.departmentList;
 	});
 

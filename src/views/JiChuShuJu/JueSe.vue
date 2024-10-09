@@ -123,11 +123,11 @@ onMounted(() => {
         window.location.href = "/login?path=RenYuan";
         return
     }
-    list()
+    getList()
 });
 
 const search = () => {
-    list();
+    getList();
 }
 
 const clear = () => {
@@ -140,7 +140,7 @@ const clear = () => {
             orderBy: ""
         }
     }
-    list();
+    getList();
 }
 
 const resetForm = () => {
@@ -183,7 +183,7 @@ const deleteRole = (row) => {
         }
         roleAPI.delete(roleIDs.value).then((res) => {
             ElMessage.success("删除成功");
-            list();
+            getList();
         }).catch((error) => {
             console.log(error);
             ElMessage.error("删除失败");
@@ -197,14 +197,14 @@ const submit = () => {
     roleAPI.save(roleForm.value).then((res) => {
         ElMessage.success("提交成功");
         roleDialogVisible.value = false;
-        list();
+        getList();
     }).catch(() => {
         ElMessage.error("提交失败");
     });
     submitButtonLoading.value = false;
     submitButtonText.value = "提交";
 }
-const list = () => {
+const getList = () => {
     loading.value = true;
     roleAPI.list(role.value).then((res) => {
         store.setRole(res.data.page.list);
@@ -218,7 +218,7 @@ const list = () => {
 const refreshTable = () => {
     role.value.page.pageNo = 1;
     pageNo.value = 1;
-    list();
+    getList();
 };
 
 //处理每页大小变化
@@ -228,13 +228,13 @@ const handleSizeChange = (value) => {
         pageNo.value = Math.ceil(total.value / value);
         role.value.page.pageNo = pageNo.value;
     }
-    list();
+    getList();
 };
 
 //处理页码改变
 const handleCurrentChange = (value) => {
     role.value.page.pageNo = value;
-    list();
+    getList();
 };
 
 //处理多选改变
@@ -251,7 +251,7 @@ const handleSortChange = (column, prop, order) => {
     } else {
         role.value.page.orderBy = ""
     }
-    list();
+    getList();
 }
 
 

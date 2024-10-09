@@ -46,16 +46,16 @@
         </el-main>
     </el-container>
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="userRoleForm">
+        <el-form :model="schedulePlanForm">
             <el-row :gutter="15">
                 <el-col :span="12">
                     <el-form-item label="姓名" prop="user.id">
-                        <UserSelect @model="setModel" :id="userRoleForm.user.id" v-if="dialogVisible" />
+                        <UserSelect @model="setModel" :id="schedulePlanForm.user.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
                     <el-form-item label="角色名称" prop="role.name">
-                        <RoleSelect @model="setModel" :id="userRoleForm.role.id" v-if="dialogVisible" />
+                        <RoleSelect @model="setModel" :id="schedulePlanForm.role.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -78,7 +78,7 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
-import userRoleAPI from "@/api/UserRole";
+import schedulePlanAPI from "@/api/SchedulePlan";
 import { ElMessage, ElMessageBox } from "element-plus";
 import UserSelect from "@/components/UserSelect.vue";
 import RoleSelect from "@/components/RoleSelect.vue";
@@ -103,8 +103,8 @@ const userSelectRef = ref(null);
 const roleSelectRef = ref(null);
 
 const setModel = (value) => {
-    userRoleForm.value[value.type].id = value.id;
-    console.log(userRoleForm.value);
+    schedulePlanForm.value[value.type].id = value.id;
+    console.log(schedulePlanForm.value);
 }
 
 
@@ -124,16 +124,20 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const userRoleForm = ref({
+const schedulePlanForm = ref({
     id: "",
-    user: {
-        id: "",
-        name: ""
-    },
-    role: {
+    schedule: {
         id: "",
         name: "",
     },
+    taskType: 0,
+    taskName: "",
+    location: "",
+    scheduleType: "",
+    startAt: "",
+    endAt: "",
+    goal: "",
+    remark: "",
     version: "",
     page: {
         pageNo: 1,
@@ -141,7 +145,6 @@ const userRoleForm = ref({
         orderBy: ""
     }
 });
-
 
 onMounted(() => {
     const token = cookies.get("token");
@@ -164,16 +167,20 @@ const clear = () => {
 }
 
 const resetForm = () => {
-    userRoleForm.value = {
+    schedulePlanForm.value = {
         id: "",
-        user: {
-            id: "",
-            name: ""
-        },
-        role: {
+        schedule: {
             id: "",
             name: "",
         },
+        taskType: 0,
+        taskName: "",
+        location: "",
+        scheduleType: "",
+        startAt: "",
+        endAt: "",
+        goal: "",
+        remark: "",
         version: "",
         page: {
             pageNo: 1,
@@ -190,14 +197,18 @@ const add = () => {
 }
 
 const edit = (row) => {
-    userRoleForm.value.id = row.id;
-    userRoleForm.value.user.id = row.user.id;
-    userRoleForm.value.user.name = row.user.name;
-    userRoleForm.value.role.id = row.role.id;
-    userRoleForm.value.role.name = row.role.name;
-    userRoleForm.value.gotAt = row.gotAt;
-    userRoleForm.value.expiredAt = row.expiredAt;
-    userRoleForm.value.version = row.version;
+    schedulePlanForm.value.id = row.id;
+    schedulePlanForm.value.schedule.id = row.scheduleId;
+    schedulePlanForm.value.schedule.name = row.scheduleName;
+    schedulePlanForm.value.taskType = row.taskType;
+    schedulePlanForm.value.taskName = row.taskName;
+    schedulePlanForm.value.location = row.location;
+    schedulePlanForm.value.scheduleType = row.scheduleType;
+    schedulePlanForm.value.startAt = row.startAt;
+    schedulePlanForm.value.endAt = row.endAt;
+    schedulePlanForm.value.goal = row.goal;
+    schedulePlanForm.value.remark = row.remark;
+    schedulePlanForm.value.version = row.version;
     dialogVisible.value = true;
     dialogTitle.value = editButtonText.value + "用户权限";
 }
@@ -227,7 +238,7 @@ const del = (row) => {
 const submit = () => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
-    userRoleAPI.save(userRoleForm.value).then((res) => {
+    userRoleAPI.save(schedulePlanForm.value).then((res) => {
         ElMessage.success("提交成功");
         dialogVisible.value = false;
         getList();
@@ -240,7 +251,7 @@ const submit = () => {
 }
 const getList = () => {
     loading.value = true;
-    userRoleAPI.list(userRoleForm.value).then((res) => {
+    schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
         store.setUserRole(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
@@ -249,7 +260,7 @@ const getList = () => {
 };
 
 const refreshTable = () => {
-    userRoleForm.value.page.pageNo = 1;
+    schedulePlanForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getList();
 };
