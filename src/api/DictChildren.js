@@ -1,7 +1,7 @@
 import request from "@/utils/Request";
 
 export default {
-	//获取字典数据列表
+	//获取字典数据
 	list(data) {
 		return request({
 			url: "/sys/dict/Children/list",
@@ -9,7 +9,6 @@ export default {
 			data: data,
 		});
 	},
-
 	//更新字典数据
 	save(data) {
 		return request({

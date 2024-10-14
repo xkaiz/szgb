@@ -13,7 +13,6 @@ const useStore = defineStore(
 		const userRole = ref({});
 		const userCertification = ref({});
 		const dict = ref({});
-		const dictChildren = ref([]);
 
 		const setUser = (data) => {
 			user.value = data;
@@ -51,10 +50,6 @@ const useStore = defineStore(
 			dict.value = data;
 		};
 
-		const setDictChildren = (data) => {
-			dictChildren.value = data;
-		};
-
 		const logout = () => {
 			user.value = {};
 		};
@@ -78,8 +73,6 @@ const useStore = defineStore(
 			setUserCertification,
 			dict,
 			setDict,
-			dictChildren,
-			setDictChildren,
 			logout,
 		};
 	},

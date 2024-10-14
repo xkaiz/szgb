@@ -16,7 +16,7 @@ export const buildTree = (data) => {
 	// 第一次遍历数据，为每个节点在map中创建一个映射
 	data.forEach((item) => {
 		// 在map中以节点的id为键，存储一个对象，包括该节点的标签和一个空的子节点数组
-		map[item.id] = { label: item.name, value: item.id, parent: item.parent == null ? "" : item.parent.id, children: [], version: item.version };
+		map[item.id] = { label: item.name, value: item.id, parent: item.parent == null ? "" : item.parent.id, children: [], dictChildren: item.dictChildren, version: item.version };
 	});
 
 	// 第二次遍历数据，根据parentId将节点添加到对应的父节点的子节点数组中
