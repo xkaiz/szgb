@@ -60,6 +60,12 @@ const routes = [
 		meta: { title: "基础数据" },
 		children: [
 			{
+				path: "/ZiDian",
+				component: () => import("@/views/JiChuShuJu/ZiDian.vue"),
+				name: "ZiDian",
+				meta: { title: "数据字典" },
+			},
+			{
 				path: "/RenYuan",
 				component: () => import("@/views/JiChuShuJu/RenYuan.vue"),
 				name: "RenYuan",

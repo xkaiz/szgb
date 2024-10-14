@@ -493,7 +493,7 @@ const submit = (type) => {
 				ElMessage.success("新建部门成功");
 			}
 			departmentDialogVisible.value = false;
-			list();
+			getDepartmentList();
 		}).catch((error) => {
 			console.log(error);
 		})
@@ -513,7 +513,7 @@ const getUserList = () => {
 };
 
 //获取部门列表
-const list = () => {
+const getDepartmentList = () => {
 	departmentLoading.value = true;
 	departmentAPI.list(department.value).then((res) => {
 		treeData.value = buildTree(res.data.page.list);

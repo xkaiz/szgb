@@ -26,8 +26,14 @@
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column prop="user.name" label="姓名" show-overflow-tooltip sortable="custom" width="180" />
-                <el-table-column prop="role.name" label="角色名称" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="location" label="地点" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="scheduleType" label="班次类型" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="startAt" label="开始时间" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="endAt" label="结束时间" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="goal" label="目标" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="remark" label="备注" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="edit(scope.row)">
@@ -252,6 +258,7 @@ const submit = () => {
 const getList = () => {
     loading.value = true;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
+        console.log(res);
         store.setUserRole(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
