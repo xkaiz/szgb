@@ -41,10 +41,11 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="roleDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="roleForm">
+    <el-dialog v-model="roleDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="roleDialogVisible">
+        <el-form :model="roleForm" :rules="rules" ref="formRef">
             <el-form-item label="角色名称" prop="name">
-                <el-input v-model="roleForm.name" placeholder="请填写角色名称" :disabled="roleLevelBoolean"></el-input>
+                <el-input v-model="roleForm.name" placeholder="请填写角色名称" :disabled="roleLevelBoolean"
+                    required></el-input>
             </el-form-item>
         </el-form>
         <template #footer>
@@ -116,11 +117,19 @@ const roleForm = ref({
     version: ""
 });
 
+const formRef = ref(null);
+
+const rules = {
+    name: [
+        { required: true, message: "请输入角色名称", trigger: "blur" },
+    ],
+}
+
 
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=JueSe";
         return
     }
     getList()
@@ -192,17 +201,22 @@ const deleteRole = (row) => {
 }
 
 const submit = () => {
-    submitButtonLoading.value = true;
-    submitButtonText.value = "提交中";
-    roleAPI.save(roleForm.value).then((res) => {
-        ElMessage.success("提交成功");
-        roleDialogVisible.value = false;
-        getList();
-    }).catch(() => {
-        ElMessage.error("提交失败");
-    });
-    submitButtonLoading.value = false;
-    submitButtonText.value = "提交";
+    formRef.value.validate((valid) => {
+        if (valid) {
+            submitButtonLoading.value = true;
+            submitButtonText.value = "提交中";
+            roleAPI.save(roleForm.value).then((res) => {
+                ElMessage.success("提交成功");
+                roleDialogVisible.value = false;
+                getList();
+            }).catch(() => {
+                ElMessage.error("提交失败");
+            });
+            submitButtonLoading.value = false;
+            submitButtonText.value = "提交";
+        }
+    })
+
 }
 const getList = () => {
     loading.value = true;

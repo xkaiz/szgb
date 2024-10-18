@@ -43,16 +43,16 @@
         </el-main>
     </el-container>
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="certificationForm">
+        <el-form :model="certificationForm" :rules="rules" ref="formRef">
             <el-row :gutter="15">
                 <el-col :span="12">
-                    <el-form-item label="证书名称" prop="name">
+                    <el-form-item label="证书名称" prop="name" required>
                         <el-input v-model="certificationForm.name" placeholder="请填写证书名称"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                    <el-form-item label="期限" prop="period">
+                    <el-form-item label="期限" prop="period" required>
                         <el-select v-model="certificationForm.period" placeholder="请选择期限" style="width: 240px">
                             <el-option v-for="item in peroidOptions" :key="item.value" :label="item.label"
                                 :value="item.value" />
@@ -80,6 +80,7 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
+import dictAPI from "@/api/Dict";
 import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
 
@@ -99,18 +100,7 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
-const peroidOptions = [
-    { label: "无期限", value: -1 },
-    { label: "一个月", value: 30 },
-    { label: "三个月", value: 90 },
-    { label: "六个月", value: 180 },
-    { label: "一年", value: 365 },
-    { label: "两年", value: 730 },
-    { label: "三年", value: 1095 },
-    { label: "四年", value: 1460 },
-    { label: "五年", value: 1825 },
-    { label: "六年", value: 2190 },
-]
+const peroidOptions = ref([])
 
 const editButtonText = computed(() => {
     if (store.roleLevel == 1) {
@@ -125,6 +115,14 @@ const roleLevelBoolean = computed(() => {
         return false;
     } else {
         return true;
+    }
+});
+
+const dict = ref({
+    page: {
+        pageNo: 1,
+        pageSize: 20,
+        orderBy: ""
     }
 });
 
@@ -145,14 +143,34 @@ const certificationForm = ref({
     version: ""
 });
 
+const formRef = ref(null);
+
+const rules = {
+    name: [
+        { required: true, message: "请输入证书名称", trigger: "blur" }
+    ],
+    period: [
+        { required: true, message: "请选择期限", trigger: "change" }
+    ]
+}
+
 
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=ZhengShu";
         return
     }
-    getList();
+    if (store.dict == undefined) {
+        dictAPI.list(dict.value).then((res) => {
+            store.setDict(buildTree(res.data.dictTree));
+            peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
+            getList();
+        })
+    } else {
+        peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
+        getList();
+    }
 });
 
 const search = () => {
@@ -221,17 +239,21 @@ const del = (row) => {
 }
 
 const submit = () => {
-    submitButtonLoading.value = true;
-    submitButtonText.value = "提交中";
-    certificationAPI.save(certificationForm.value).then((res) => {
-        ElMessage.success("提交成功");
-        dialogVisible.value = false;
-        getList();
-    }).catch(() => {
-        ElMessage.error("提交失败");
-    });
-    submitButtonLoading.value = false;
-    submitButtonText.value = "提交";
+    formRef.value.validate((valid) => {
+        if (valid) {
+            submitButtonLoading.value = true;
+            submitButtonText.value = "提交中";
+            certificationAPI.save(certificationForm.value).then((res) => {
+                ElMessage.success("提交成功");
+                dialogVisible.value = false;
+                getList();
+            }).catch(() => {
+                ElMessage.error("提交失败");
+            });
+            submitButtonLoading.value = false;
+            submitButtonText.value = "提交";
+        }
+    })
 }
 
 //获取证书列表

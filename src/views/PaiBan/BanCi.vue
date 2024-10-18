@@ -1,5 +1,593 @@
 <template>
-    <div>
-        <h1>班次管理</h1>
+
+    <el-container class="container">
+        <el-main class="main">
+            <el-row class="toolbar">
+                <div>
+                    <el-button type="primary" @click="addSchedule" v-if="!roleLevelBoolean">新增</el-button>
+                    <el-button type="danger" plain :disabled="deleteButtonDisabled" @click="deleteSchedule"
+                        v-if="!roleLevelBoolean">删除</el-button>
+                </div>
+                <el-button-group>
+                    <el-button type="default" @click="refreshTable">刷新</el-button>
+                </el-button-group>
+            </el-row>
+            <el-table class="table" :data="tableData" stripe v-loading="scheduleLoading"
+                @selection-change="handleSelectionChange" @sort-change="handleSortChange">
+                <el-table-column fixed="left" type="selection" header-align="center" align="center" width="50" />
+                <el-table-column prop="id" label="id" width="80" v-if="false" />
+                <el-table-column prop="department.name" label="排班部门" show-overflow-tooltip sortable="custom"
+                    width="200" />
+                <el-table-column prop="date" label="日期" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="m800" label="800M" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="dayGaffer" label="白班领班" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="dayLeader" label="白班抢修组长" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="dayContact" label="白班信息联络" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="dayMateriel" label="白班物料准备" show-overflow-tooltip sortable="custom"
+                    width="150" />
+                <el-table-column prop="dayOther" label="白班其它人员" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="nightGaffer" label="夜班领班" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="nightLeader" label="夜班抢修组长" show-overflow-tooltip sortable="custom"
+                    width="150" />
+                <el-table-column prop="nightContact" label="夜班信息联络" show-overflow-tooltip sortable="custom"
+                    width="150" />
+                <el-table-column prop="nightMateriel" label="夜班物料准备" show-overflow-tooltip sortable="custom"
+                    width="150" />
+                <el-table-column prop="nightOther" label="夜班其它人员" show-overflow-tooltip sortable="custom" width="150" />
+
+                <el-table-column fixed="right" label="操作" width="120">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="editSchedule(scope.row)">
+                            {{ editButtonText }}
+                        </el-button>
+                        <el-button link type="primary" size="small" @click="deleteSchedule(scope.row)"
+                            v-if="!roleLevelBoolean">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-row class="pagination">
+                <el-pagination background layout="total, sizes, prev, pager, next, jumper" v-model:current-page="pageNo"
+                    v-model:page-size="pageSize" :total="total" :page-sizes="[20, 40, 60, 80, 100]"
+                    @size-change="handleSizeChange" @current-change="handleCurrentChange" />
+            </el-row>
+        </el-main>
+    </el-container>
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="80%" draggable overflow>
+        <el-form :model="scheduleForm">
+            <el-row :gutter="15">
+                <el-col :span="5">
+                    <el-form-item label="排班部门" prop="department.id">
+                        <DepartmentSelect ref="departmentSelectRef" @model="setModel" :id="scheduleForm.department.id"
+                            :disabled="roleLevelBoolean" />
+                    </el-form-item>
+                </el-col>
+                <el-col :span="5">
+                    <el-form-item label="日期" prop="date">
+                        <el-date-picker v-model="scheduleForm.date" placeholder="请选择日期"></el-date-picker>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="5">
+                    <el-form-item label="800M" prop="m800">
+                        <el-input v-model="scheduleForm.m800" placeholder="请输入800M"></el-input>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="3">
+                    <span class="edit-subtitle">白班应急分工</span>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="领班" prop="dayGaffer">
+                        <el-select>
+                            <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row :gutter="15">
+                <el-col :span="6">
+                    <el-form-item label="抢修组长" prop="dayLeader">
+                        <el-select>
+                            <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="信息联络" prop="dayContact">
+                        <el-select>
+                            <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+
+                <el-col :span="6">
+                    <el-form-item label="物料准备" prop="dayMateriel">
+                        <el-select>
+                            <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="其它人员" prop="dayOther">
+                        <el-select>
+                            <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row>
+                <el-col :span="3">
+                    <span class="edit-subtitle">夜班应急分工</span>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="领班" prop="nightGaffer">
+                        <el-select>
+                            <el-option v-for="item in nightOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row :gutter="15">
+                <el-col :span="6">
+                    <el-form-item label="抢修组长" prop="nightLeader">
+                        <el-select>
+                            <el-option v-for="item in nightOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="信息联络" prop="nightContact">
+                        <el-select>
+                            <el-option v-for="item in nightOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="物料准备" prop="nightMateriel">
+                        <el-select>
+                            <el-option v-for="item in nightOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                    <el-form-item label="其它人员" prop="nightOther">
+                        <el-select>
+                            <el-option v-for="item in nightOptions" :key="item.value" :label="item.label"
+                                :value="item.value" />
+                        </el-select>
+                    </el-form-item>
+                </el-col>
+            </el-row>
+            <el-row class="toolbar">
+                <div>
+                    <el-button type="primary" @click="addSchedulePlan" v-if="!roleLevelBoolean">新增</el-button>
+                    <el-button type="danger" plain :disabled="deleteButtonDisabled" @click="deleteSchedulePlan"
+                        v-if="!roleLevelBoolean">删除</el-button>
+                </div>
+                <el-button-group>
+                    <el-button type="default" @click="refreshTable">刷新</el-button>
+                </el-button-group>
+            </el-row>
+            <el-table :data="subTableData" stripe v-loading="scheduleLoading" @selection-change="handleSelectionChange"
+                @sort-change="handleSortChange">
+                <el-table-column type="selection" header-align="center" align="center" width="50" />
+                <el-table-column prop="id" label="id" width="80" v-if="false" />
+                <el-table-column type="expand">
+                    <template #default="props">
+                        <p>目标：{{ props.row.goal }}</p>
+                        <p>备注：{{ props.row.remark }}</p>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip width="120" />
+                <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip width="120" />
+                <el-table-column prop="location" label="地点" show-overflow-tooltip width="120" />
+                <el-table-column prop="scheduleType" label="班次类型" show-overflow-tooltip width="120" />
+                <el-table-column prop="startAt" label="开始时间" show-overflow-tooltip width="200" />
+                <el-table-column prop="endAt" label="结束时间" show-overflow-tooltip width="200" />
+                <el-table-column prop="" label="负责人" show-overflow-tooltip />
+                <el-table-column prop="" label="参与人员" show-overflow-tooltip />
+                <el-table-column fixed="right" label="操作" width="120">
+                    <template #default="scope">
+                        <el-button link type="primary" size="small" @click="editSchedulePlan(scope.row)">
+                            {{ editButtonText }}
+                        </el-button>
+                        <el-button link type="primary" size="small" @click="deleteSchedulePlan(scope.row)"
+                            v-if="!roleLevelBoolean">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-form>
+        <template #footer>
+            <div class="dialog-footer">
+                <el-button @click="dialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+                <el-button type="primary" @click="submit()" :loading="submitButtonLoading" v-if="!roleLevelBoolean">
+                    {{ submitButtonText }}
+                </el-button>
+            </div>
+        </template>
+    </el-dialog>
+
+    <div class="drawer">
+        <el-drawer v-model="drawerVisible" direction="ltr" size="30%">
+            <template #header>
+                <h3>部门管理</h3>
+            </template>
+        </el-drawer>
     </div>
 </template>
+
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import { useCookies } from "vue3-cookies";
+const { cookies } = useCookies();
+import useStore from "@/store/index";
+const store = useStore();
+
+import scheduleAPI from "@/api/Schedule";
+import schedulePlanAPI from "@/api/SchedulePlan";
+import { ElMessage, ElMessageBox } from "element-plus";
+import UserSelect from "@/components/UserSelect.vue";
+import DepartmentSelect from "@/components/DepartmentSelect.vue"
+
+const userSelectRef = ref(null);
+const departmentSelectRef = ref(null);
+
+const tableData = ref([]);
+const subTableData = ref([]);
+const scheduleLoading = ref(true);
+const schedulePlanLoading = ref(true);
+const pageNo = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
+
+const dialogVisible = ref(false);
+const dialogTitle = ref("");
+
+const drawerVisible = ref(false);
+
+const submitButtonLoading = ref(false);
+const submitButtonText = ref("提交");
+
+const deleteButtonDisabled = ref(true);
+
+const IDs = ref("");
+
+const roleSelectRef = ref(null);
+
+const setModel = (value) => {
+    scheduleForm.value[value.type].id = value.id;
+    console.log(scheduleForm.value);
+}
+
+
+const editButtonText = computed(() => {
+    if (store.roleLevel == 1) {
+        return "编辑";
+    } else {
+        return "查看";
+    }
+});
+
+const roleLevelBoolean = computed(() => {
+    if (store.roleLevel == 1) {
+        return false;
+    } else {
+        return true;
+    }
+});
+
+const scheduleForm = ref({
+    id: "",
+    department: {
+        id: "",
+        name: "",
+    },
+    date: "",
+    m800: "",
+    dayGaffer: "",
+    dayLeader: "",
+    dayContact: "",
+    dayMateriel: "",
+    dayOther: "",
+    nightGaffer: "",
+    nightLeader: "",
+    nightContact: "",
+    nightMateriel: "",
+    nightOther: "",
+    version: "",
+    page: {
+        pageNo: 1,
+        pageSize: 20,
+        orderBy: ""
+    }
+});
+
+const dayOptions = ref([])
+const nightOptions = ref([])
+
+onMounted(() => {
+    const token = cookies.get("token");
+    if (token == null || token == "") {
+        window.location.href = "/login?path=JiHua";
+        return
+    }
+    if (store.dict == undefined) {
+        dictAPI.list(dict.value).then((res) => {
+            store.setDict(buildTree(res.data.dictTree));
+            getScheduleList();
+        })
+    } else {
+        getScheduleList();
+    }
+});
+
+const search = () => {
+    getScheduleList();
+}
+
+const clear = () => {
+    userSelectRef.value.clear();
+    roleSelectRef.value.clear();
+    resetForm();
+    getScheduleList();
+}
+
+const resetForm = () => {
+    scheduleForm.value = {
+        id: "",
+        schedule: {
+            id: "",
+            name: "",
+        },
+        taskType: 0,
+        taskName: "",
+        location: "",
+        scheduleType: "",
+        startAt: "",
+        endAt: "",
+        goal: "",
+        remark: "",
+        version: "",
+        page: {
+            pageNo: 1,
+            pageSize: 20,
+            orderBy: ""
+        }
+    }
+}
+
+const schedulePlanForm = ref({
+    id: "",
+    schedule: {
+        id: "",
+    },
+    taskType: 0,
+    taskName: "",
+    location: "",
+    scheduleType: "",
+    startAt: "",
+    endAt: "",
+    goal: "",
+    remark: "",
+    version: "",
+    page: {
+        pageNo: 1,
+        pageSize: 20,
+        orderBy: ""
+    }
+});
+
+const addSchedule = () => {
+    resetForm()
+    dialogVisible.value = true;
+    dialogTitle.value = "新建用户权限";
+}
+
+const editSchedule = (row) => {
+    scheduleForm.value = row;
+    getSchedulePlanList(row.id)
+    dialogVisible.value = true;
+    dialogTitle.value = editButtonText.value + "班次";
+}
+
+const deleteSchedule = (row) => {
+    ElMessageBox.confirm("确定删除吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+    }).then(() => {
+        if (row.id != undefined) {
+            IDs.value = row.id;
+        }
+        if (IDs.value == "") {
+            return
+        }
+        scheduleAPI.delete(IDs.value).then((res) => {
+            ElMessage.success("删除成功");
+            getScheduleList();
+        }).catch((error) => {
+            console.log(error);
+            ElMessage.error("删除失败");
+        });
+    }).catch(() => { })
+}
+
+const addSchedulePlan = () => {
+    resetForm()
+    drawerVisible.value = true;
+}
+
+const editSchedulePlan = (row) => {
+    scheduleForm.value = row;
+    getSchedulePlanList(row.id)
+    dialogVisible.value = true;
+    dialogTitle.value = editButtonText.value + "班次";
+}
+
+const deleteSchedulePlan = (row) => {
+    ElMessageBox.confirm("确定删除吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+    }).then(() => {
+        if (row.id != undefined) {
+            IDs.value = row.id;
+        }
+        if (IDs.value == "") {
+            return
+        }
+        schedulePlanAPI.delete(IDs.value).then((res) => {
+            ElMessage.success("删除成功");
+            getScheduleList();
+        }).catch((error) => {
+            console.log(error);
+            ElMessage.error("删除失败");
+        });
+    }).catch(() => { })
+}
+
+const submit = () => {
+    submitButtonLoading.value = true;
+    submitButtonText.value = "提交中";
+    userRoleAPI.save(scheduleForm.value).then((res) => {
+        ElMessage.success("提交成功");
+        dialogVisible.value = false;
+        getScheduleList();
+    }).catch((error) => {
+        console.log(error);
+        ElMessage.error("提交失败");
+    });
+    submitButtonLoading.value = false;
+    submitButtonText.value = "提交";
+}
+const getScheduleList = () => {
+    scheduleLoading.value = true;
+    scheduleAPI.list(scheduleForm.value).then((res) => {
+        res.data.page.list.forEach((item) => {
+            item.date = formatDate(new Date(item.date), 1)
+        });
+        store.setSchedule(res.data.page.list);
+        total.value = res.data.page.count;
+        tableData.value = res.data.page.list;
+        scheduleLoading.value = false;
+    });
+};
+
+const getSchedulePlanList = (scheduleID) => {
+    schedulePlanLoading.value = true;
+    schedulePlanForm.value.schedule.id = scheduleID;
+    schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
+        const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
+        const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
+        res.data.page.list.forEach((item) => {
+            item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
+            item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
+        });
+        store.setSchedulePlan(res.data.page.list);
+        subTableData.value = res.data.page.list;
+        schedulePlanLoading.value = false;
+    });
+}
+
+const formatDate = (date, num, type) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + num).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
+};
+
+const refreshTable = () => {
+    scheduleForm.value.page.pageNo = 1;
+    pageNo.value = 1;
+    getScheduleList();
+};
+
+const handleSizeChange = (value) => {
+    user.value.page.pageSize = value;
+    if (pageNo.value * value > total.value) {
+        pageNo.value = Math.ceil(total.value / value);
+        user.value.page.pageNo = pageNo.value;
+    }
+    getScheduleList();
+};
+
+const handleCurrentChange = (value) => {
+    user.value.page.pageNo = value;
+    getScheduleList();
+};
+
+const handleSelectionChange = (value) => {
+    deleteButtonDisabled.value = value.length == 0;
+    IDs.value = value.map((item) => item.id).join(",");
+}
+
+const handleSortChange = (column, prop, order) => {
+    if (column.order != null) {
+        column.order = column.order.replace(/ending/, "");
+        user.value.page.orderBy = `${column.prop} ${column.order}`;
+    } else {
+        user.value.page.orderBy = ""
+    }
+    getScheduleList();
+}
+</script>
+
+<style scoped>
+.container {
+    height: calc(100vh - 52px);
+}
+
+.search {
+    margin-bottom: 1%;
+}
+
+.search-item {
+    margin-right: 1%;
+}
+
+.main {
+    height: calc(100vh - 52px);
+    border: 1px solid #ccc;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1%;
+}
+
+.table {
+    height: calc(100vh - 200px);
+    margin-bottom: 2%;
+}
+
+.pagination {
+    display: flex;
+    justify-content: right;
+}
+
+.form-item {
+    margin-right: 1%;
+}
+
+.edit-subtitle {
+    font-size: medium;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2%;
+    text-decoration: underline;
+}
+
+.drawer:deep(.el-drawer__header) {
+    margin-bottom: 0
+}
+</style>

@@ -2,16 +2,6 @@
 
     <el-container class="container">
         <el-main class="main">
-            <el-row class="search">
-                <el-row class="search-item">
-                    <UserSelect ref="userSelectRef" @model="setModel" />
-                </el-row>
-                <el-row class="search-item">
-                    <RoleSelect ref="roleSelectRef" @model="setModel" />
-                </el-row>
-                <el-button type="primary" @click="search">查询</el-button>
-                <el-button type="primary" @click="clear">重置</el-button>
-            </el-row>
             <el-row class="toolbar">
                 <div>
                     <el-button type="primary" @click="add" v-if="!roleLevelBoolean">新增</el-button>
@@ -155,10 +145,17 @@ const schedulePlanForm = ref({
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=JiHua";
         return
     }
-    getList();
+    if (store.dict == undefined) {
+        dictAPI.list(dict.value).then((res) => {
+            store.setDict(buildTree(res.data.dictTree));
+            getList();
+        })
+    } else {
+        getList();
+    }
 });
 
 const search = () => {
@@ -258,12 +255,26 @@ const submit = () => {
 const getList = () => {
     loading.value = true;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
-        console.log(res);
-        store.setUserRole(res.data.page.list);
+        const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
+        const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
+        res.data.page.list.forEach((item) => {
+            item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
+            item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
+            item.startAt = formatDate(new Date(item.startAt), 1)
+            item.endAt = formatDate(new Date(item.endAt), 1)
+        });
+        store.setSchedulePlan(res.data.page.list);
         total.value = res.data.page.count;
         tableData.value = res.data.page.list;
         loading.value = false;
     });
+};
+
+const formatDate = (date, num, type) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + num).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
 };
 
 const refreshTable = () => {
@@ -327,7 +338,7 @@ const handleSortChange = (column, prop, order) => {
 }
 
 .table {
-    height: calc(100vh - 260px);
+    height: calc(100vh - 200px);
     margin-bottom: 2%;
 }
 

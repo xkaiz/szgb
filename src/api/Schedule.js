@@ -4,7 +4,7 @@ export default {
 	//获取角色列表
 	list(data) {
 		return request({
-			url: "/sys/role/list",
+			url: "/schedule/list",
 			method: "post",
 			data: data,
 		});
@@ -13,7 +13,7 @@ export default {
 	//更新角色
 	save(data) {
 		return request({
-			url: "/sys/role/save",
+			url: "/schedule/save",
 			method: "post",
 			data: data,
 		});
@@ -22,7 +22,7 @@ export default {
 	//删除角色
 	delete(ids) {
 		return request({
-			url: "/sys/role/delete",
+			url: "/schedule/delete",
 			method: "delete",
 			params: { ids: ids },
 		});

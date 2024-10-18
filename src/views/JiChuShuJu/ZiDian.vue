@@ -11,14 +11,14 @@
             </el-row>
             <el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
                 :filter-node-method="filterNode" v-loading="dictLoading" default-expand-all
-                :expand-on-click-node="false" />
+                :expand-on-click-node="false" node-key="value" />
         </el-aside>
         <el-main class="main">
             <el-row class="toolbar">
                 <div>
-                    <el-button type="primary" :disabled="addDictChildrenButtonDisabled" @click="addDictChildren"
-                        v-if="!roleLevelBoolean">新增</el-button>
-                    <el-button type="danger" plain :disabled="deleteDictButtonDisabled" @click="deleteDict"
+                    <el-button type="primary" @click="addDictChildren" v-if="!roleLevelBoolean"
+                        :disabled="addDictButtonDisabled">新增</el-button>
+                    <el-button type="danger" plain :disabled="deleteDictButtonDisabled" @click="deleteDictChildren"
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
                 <el-button-group>
@@ -27,7 +27,7 @@
                 </el-button-group>
             </el-row>
             <el-table class="table" :data="tableData" stripe v-loading="dictChildrenLoading"
-                @selection-change="handleSelectionChange" @sort-change="handleSortChange" row-key="id">
+                @selection-change="handleSelectionChange" row-key="id">
                 <el-table-column type="selection" header-align="center" align="center" />
                 <el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
                 <el-table-column prop="label" label="键" align="center" width="150" />
@@ -135,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
+import { ref, onMounted, watch, computed, nextTick } from "vue";
 
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
@@ -146,8 +146,6 @@ import dictAPI from "@/api/Dict";
 import dictChildrenAPI from "@/api/DictChildren";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { id } from "element-plus/es/locales.mjs";
-import { get } from "@vueuse/core";
 
 const treeRef = ref(null);
 const treeData = ref([]);
@@ -176,8 +174,8 @@ const editButtonText = computed(() => {
 });
 
 //组件可用性
+const addDictButtonDisabled = ref(true);
 const deleteDictButtonDisabled = ref(true);
-const addDictChildrenButtonDisabled = ref(true);
 const refreshTableButtonDisabled = ref(true);
 const deleteDictChildrenButtonDisabled = ref(true);
 
@@ -249,7 +247,7 @@ const dictChildrenForm = ref({
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=ZiDian";
         return
     }
     dictAPI.list(dict.value).then((res) => {
@@ -262,38 +260,33 @@ onMounted(() => {
 
 //处理字典数据树节点点击
 const handleNodeClick = (data) => {
+    addDictButtonDisabled.value = false
     store.dict.map((item) => {
         if (item.value == data.value) {
             tableData.value = item.dictChildren;
             dictChildrenForm.value.dict.id = item.value
-            addDictChildrenButtonDisabled.value = false
             refreshTableButtonDisabled.value = false
         }
     })
     if (tableData.value == null) {
-        addDictChildrenButtonDisabled.value = true
         refreshTableButtonDisabled.value = true
     }
 
 };
-//字典数据树筛选
+//字典树筛选
 const filterNode = (value, data) => {
     if (!value) return true
     return data.label.includes(value)
 }
-//字典数据树筛选文本监听
+//字典树筛选文本监听
 watch(filterText, (value) => {
     treeRef.value.filter(value)
 })
-//处理字典数据树节点选中
+//处理字典树节点选中
 const handleCheckChange = (data) => {
-    if (data.children.length > 0 && node) {
-        ElMessage.warning("无法删除当前包含子节点的字典数据，请先删除子字典数据");
-        return
-    }
     const node = treeRef.value.getCheckedNodes(false, false)
     treeChecked.value = node
-    dictChildrenIDs.value = treeChecked.value.map((item) => item.value).join(",");
+    dictIDs.value = treeChecked.value.map((item) => item.value).join(",");
     deleteDictChildrenButtonDisabled.value = (treeChecked.value.length == 0);
 }
 
@@ -389,7 +382,7 @@ const deleteDictChildren = (row) => {
         }
         dictChildrenAPI.delete(dictChildrenIDs.value).then((res) => {
             ElMessage.success("删除成功");
-            getDictChildrenList(row.id);
+            getDictChildrenList(row.dict.id);
         }).catch(() => {
             ElMessage.error("删除失败");
         });
@@ -415,7 +408,6 @@ const submit = (type) => {
             console.log(error);
         })
     } else if (type == "dictChildren") {
-        console.log(dictChildrenForm.value);
         dictChildrenAPI.save(dictChildrenForm.value).then((res) => {
             if (dialogTitle.value == "编辑字典数据") {
                 ElMessage.success("更新字典数据成功");
@@ -423,7 +415,7 @@ const submit = (type) => {
                 ElMessage.success("新建字典数据成功");
             }
             dictChildrenDialogVisible.value = false;
-            getDictChildrenList(dictChildrenForm.value.id);
+            getDictChildrenList(dictChildrenForm.value.dict.id);
         }).catch((error) => {
             console.log(error);
         })
@@ -436,7 +428,7 @@ const submit = (type) => {
 const getDictList = () => {
     dictLoading.value = true;
     dictAPI.list(dict.value).then((res) => {
-        treeData.value = buildTree(res.data.page.list);
+        treeData.value = buildTree(res.data.dictTree);
         dictLoading.value = false;
     });
 };
@@ -444,11 +436,18 @@ const getDictList = () => {
 //获取字典数据列表
 const getDictChildrenList = (dictID) => {
     dictChildrenLoading.value = true;
-    dictChildren.value.dict.id = dictID
-    dictChildrenAPI.list(dictChildren.value).then((res) => {
-        tableData.value = res.data.page.list
-        total.value = res.data.page.count;
+    dictAPI.list(dict.value).then((res) => {
+        treeData.value = buildTree(res.data.dictTree);
+        store.setDict(buildTree(res.data.dictTree));
         dictChildrenLoading.value = false;
+        treeData.value.forEach((item) => {
+            if (item.value == dictID) {
+                tableData.value = item.dictChildren;
+            }
+        })
+        nextTick(() => {
+            treeRef.value.setCurrentKey(dictID)
+        })
     });
 };
 
@@ -477,34 +476,7 @@ const handleCurrentChange = (value) => {
 //处理多选改变
 const handleSelectionChange = (value) => {
     deleteDictButtonDisabled.value = value.length == 0;
-    dictIDs.value = value.map((item) => item.id).join(",");
-}
-//处理排序改变
-const handleSortChange = (column, prop, order) => {
-    if (column.order != null) {
-        if (getTextType(column.prop) == "CamelCase") {
-            column.prop = column.prop.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
-        } else if (getTextType(column.prop) == "DotSeparated") {
-            column.prop = `${column.prop.split('.')[0][0]}.${column.prop.split('.')[1]}`
-        }
-        column.order = column.order.replace(/ending/, "");
-        dict.value.page.orderBy = `${column.prop} ${column.order}`;
-    } else {
-        dict.value.page.orderBy = ""
-    }
-    getDictList();
-}
-
-//获取文本类型
-const getTextType = (value) => {
-    const camelCaseRegex = /^[a-z]+([A-Z][a-z]*)*$/;
-    const dotSeparatedRegex = /^[a-z]+(\.[a-z]+)*$/;
-
-    if (camelCaseRegex.test(value)) {
-        return 'CamelCase';
-    } else if (dotSeparatedRegex.test(value)) {
-        return 'DotSeparated';
-    }
+    dictChildrenIDs.value = value.map((item) => item.id).join(",");
 }
 
 </script>
@@ -536,7 +508,7 @@ const getTextType = (value) => {
 }
 
 .table {
-    height: calc(100vh - 250px);
+    height: calc(100vh - 200px);
     margin-bottom: 2%;
 }
 

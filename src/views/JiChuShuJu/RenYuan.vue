@@ -63,32 +63,34 @@
 			</el-row>
 		</el-main>
 	</el-container>
-	<el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-		<el-form :model="userForm">
+	<el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="userDialogVisible">
+		<el-form :model="userForm" :rules="userRules" ref="userFormRef">
 			<el-row :gutter="15">
 				<el-col :span="12">
-					<el-form-item label="用户名" prop="username">
+					<el-form-item label="用户名" prop="username" required>
 						<el-input v-model="userForm.username" placeholder="请填写用户名"
 							:disabled="usernameDisabled || roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="12">
-					<el-form-item label="姓名" prop="name">
+					<el-form-item label="姓名" prop="name" required>
 						<el-input v-model="userForm.name" placeholder="请填写姓名" :disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
-
 			</el-row>
 			<el-row :gutter="15">
 				<el-col :span="12">
-					<el-form-item label="工号" prop="no">
+					<el-form-item label="工号" prop="no" required>
 						<el-input v-model="userForm.no" placeholder="请填写工号" :disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="12">
-					<el-form-item label="部门" prop="department">
-						<el-tree-select v-model="userForm.department.id" :data="store.departmentList"
-							:render-after-expand="false" filterable :disabled="roleLevelBoolean" />
+					<el-form-item label="部门" prop="department" required>
+						<!-- <el-tree-select v-model="userForm.department.id" :data="store.departmentList"
+							:render-after-expand="false" filterable :disabled="roleLevelBoolean" /> -->
+						<DepartmentSelect ref="departmentSelectRef" @model="setModel" :id="userForm.department.id"
+							:disabled="roleLevelBoolean" />
+
 					</el-form-item>
 				</el-col>
 
@@ -142,17 +144,18 @@
 			</template>
 		</el-drawer>
 	</div>
-	<el-dialog v-model="departmentDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-		<el-form :model="departmentForm">
+	<el-dialog v-model="departmentDialogVisible" :title="dialogTitle" width="30%" draggable overflow
+		v-if="departmentDialogVisible">
+		<el-form :model="departmentForm" :rules="departmentRules" ref="departmentFormRef">
 			<el-row :gutter="15">
 				<el-col :span="12">
-					<el-form-item label="部门名称" prop="name">
+					<el-form-item label="部门名称" prop="name" required>
 						<el-input v-model="departmentForm.name" placeholder="请填写部门名称"
 							:disabled="roleLevelBoolean"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="12">
-					<el-form-item label="父部门" prop="parent">
+					<el-form-item label="父部门" prop="parent" required>
 						<el-tree-select v-model="departmentForm.parent.id" :data="store.departmentList"
 							:render-after-expand="false" filterable :disabled="roleLevelBoolean" />
 					</el-form-item>
@@ -181,18 +184,20 @@ const store = useStore();
 
 import userAPI from "@/api/User";
 import departmentAPI from "@/api/Department";
-import certificationAPI from "@/api/Certification";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
+import DepartmentSelect from "@/components/DepartmentSelect.vue"
 
 const treeRef = ref(null);
 const treeData = ref([]);
 const filterText = ref("");
 const tableData = ref([]);
 
+//组件ref
+const departmentSelectRef = ref(null);
+
 //加载状态
 const userLoading = ref(true);
-const certificationLoading = ref(true);
 const departmentLoading = ref(true);
 const submitButtonLoading = ref(false);
 
@@ -239,6 +244,12 @@ const roleLevelBoolean = computed(() => {
 	}
 });
 
+//组件数据传递
+const setModel = (value) => {
+	userForm.value[value.type].id = value.id;
+	console.log(userForm.value);
+}
+
 //用户查询
 const user = ref({
 	username: "",
@@ -269,6 +280,25 @@ const userForm = ref({
 	role: {}
 });
 
+const userFormRef = ref(null);
+
+const validateDepartment = (rule, value, callback) => {
+	if (value.id == "") {
+		callback(new Error("请选择部门"));
+	} else {
+		callback();
+	}
+}
+
+const userRules = {
+	username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
+	name: [{ required: true, message: "请输入姓名", trigger: "blur" }],
+	no: [{ required: true, message: "请输入工号", trigger: "blur" }],
+	department: [{ required: true, message: "请选择部门", trigger: "change", validator: validateDepartment }],
+}
+
+
+
 //部门表单
 const departmentForm = ref({
 	id: "",
@@ -278,6 +308,13 @@ const departmentForm = ref({
 	},
 	version: "",
 });
+
+const departmentFormRef = ref(null);
+
+const departmentRules = {
+	name: [{ required: true, message: "请输入部门名称", trigger: "blur" }],
+	parent: [{ required: true, message: "请选择部门", trigger: "change", validator: validateDepartment }],
+}
 
 onMounted(() => {
 	const token = cookies.get("token");
@@ -470,33 +507,43 @@ const deleteDepartment = (node, data) => {
 
 //提交新增、编辑
 const submit = (type) => {
+
 	submitButtonLoading.value = true;
 	submitButtonText.value = "提交中";
 	if (type == "user") {
-		userAPI.save(userForm.value).then((res) => {
-			if (dialogTitle.value == "编辑用户") {
-				ElMessage.success("更新用户成功");
-			} else if (dialogTitle.value == "新建用户") {
-				ElMessage.success("新建用户成功");
+		userFormRef.value.validate((valid) => {
+			if (valid) {
+				userAPI.save(userForm.value).then((res) => {
+					if (dialogTitle.value == "编辑用户") {
+						ElMessage.success("更新用户成功");
+					} else if (dialogTitle.value == "新建用户") {
+						ElMessage.success("新建用户成功");
+					}
+					userDialogVisible.value = false;
+					getUserList();
+				}).catch((error) => {
+					console.log(error);
+				})
 			}
-			userDialogVisible.value = false;
-			getUserList();
-		}).catch((error) => {
-			console.log(error);
 		})
+
 	} else if (type == "department") {
-		console.log(departmentForm.value);
-		departmentAPI.save(departmentForm.value).then((res) => {
-			if (dialogTitle.value == "编辑部门") {
-				ElMessage.success("更新部门成功");
-			} else if (dialogTitle.value == "新建部门") {
-				ElMessage.success("新建部门成功");
+		departmentFormRef.value.validate((valid) => {
+			if (valid) {
+				departmentAPI.save(departmentForm.value).then((res) => {
+					if (dialogTitle.value == "编辑部门") {
+						ElMessage.success("更新部门成功");
+					} else if (dialogTitle.value == "新建部门") {
+						ElMessage.success("新建部门成功");
+					}
+					departmentDialogVisible.value = false;
+					getDepartmentList();
+				}).catch((error) => {
+					console.log(error);
+				})
 			}
-			departmentDialogVisible.value = false;
-			getDepartmentList();
-		}).catch((error) => {
-			console.log(error);
 		})
+
 	}
 	submitButtonLoading.value = false;
 	submitButtonText.value = "提交";

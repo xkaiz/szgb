@@ -166,7 +166,7 @@ const userCertificationForm = ref({
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=ZiZhi";
         return
     }
     getList();
@@ -339,10 +339,10 @@ const getTextType = (value) => {
 
 const handleGotAtChange = (value) => {
     userCertificationForm.value.gotAt = formatDate(value, 1, 0);
-    list()
+    getUserCertification()
 }
 
-const list = () => {
+const getUserCertification = () => {
     if (userCertificationForm.value.gotAt != "") {
         certificationAPI.getById(userCertificationForm.value.certification).then((res) => {
             let period = res.data.data.period;

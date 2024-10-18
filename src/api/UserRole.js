@@ -4,7 +4,7 @@ export default {
 	//获取用户角色列表
 	list(data) {
 		return request({
-			url: "/sys/userRole/list",
+			url: "/sys/user/role/list",
 			method: "post",
 			data: data,
 		});
@@ -12,7 +12,7 @@ export default {
 	//更新证书
 	save(data) {
 		return request({
-			url: "/sys/userRole/save",
+			url: "/sys/user/role/save",
 			method: "post",
 			data: data,
 		});
@@ -21,7 +21,7 @@ export default {
 	//删除证书
 	delete(ids) {
 		return request({
-			url: "/sys/userRole/delete",
+			url: "/sys/user/role/delete",
 			method: "delete",
 			params: { ids: ids },
 		});

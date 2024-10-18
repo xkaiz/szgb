@@ -13,6 +13,9 @@ const useStore = defineStore(
 		const userRole = ref({});
 		const userCertification = ref({});
 		const dict = ref({});
+		const dictUpdateDate = ref("");
+		const schedule = ref({});
+		const schedulePlan = ref({});
 
 		const setUser = (data) => {
 			user.value = data;
@@ -50,6 +53,18 @@ const useStore = defineStore(
 			dict.value = data;
 		};
 
+		const setDictUpdateDate = (data) => {
+			dictUpdateDate.value = data;
+		};
+
+		const setSchedule = (data) => {
+			schedule.value = data;
+		};
+
+		const setSchedulePlan = (data) => {
+			schedulePlan.value = data;
+		};
+
 		const logout = () => {
 			user.value = {};
 		};
@@ -73,6 +88,12 @@ const useStore = defineStore(
 			setUserCertification,
 			dict,
 			setDict,
+			dictUpdateDate,
+			setDictUpdateDate,
+			schedule,
+			setSchedule,
+			schedulePlan,
+			setSchedulePlan,
 			logout,
 		};
 	},

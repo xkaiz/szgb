@@ -45,16 +45,16 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="userRoleForm">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="dialogVisible">
+        <el-form :model="userRoleForm" :rules="rules" ref="formRef">
             <el-row :gutter="15">
                 <el-col :span="12">
-                    <el-form-item label="姓名" prop="user.id">
+                    <el-form-item label="姓名" prop="user.id" required>
                         <UserSelect @model="setModel" :id="userRoleForm.user.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                    <el-form-item label="角色名称" prop="role.name">
+                    <el-form-item label="角色名称" prop="role.name" required>
                         <RoleSelect @model="setModel" :id="userRoleForm.role.id" v-if="dialogVisible" />
                     </el-form-item>
                 </el-col>
@@ -142,11 +142,23 @@ const userRoleForm = ref({
     }
 });
 
+const formRef = ref(null);
+
+const rules = {
+    "user.id": [
+        { required: true, message: "请选择用户", trigger: "blur" }
+    ],
+    "role.name": [
+        { required: true, message: "请选择角色", trigger: "blur" }
+    ]
+}
+
+
 
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=RenYuan";
+        window.location.href = "/login?path=QuanXian";
         return
     }
     getList();
@@ -225,18 +237,23 @@ const del = (row) => {
 }
 
 const submit = () => {
-    submitButtonLoading.value = true;
-    submitButtonText.value = "提交中";
-    userRoleAPI.save(userRoleForm.value).then((res) => {
-        ElMessage.success("提交成功");
-        dialogVisible.value = false;
-        getList();
-    }).catch((error) => {
-        console.log(error);
-        ElMessage.error("提交失败");
-    });
-    submitButtonLoading.value = false;
-    submitButtonText.value = "提交";
+    formRef.value.validate((valid) => {
+        if (valid) {
+            submitButtonLoading.value = true;
+            submitButtonText.value = "提交中";
+            userRoleAPI.save(userRoleForm.value).then((res) => {
+                ElMessage.success("提交成功");
+                dialogVisible.value = false;
+                getList();
+            }).catch((error) => {
+                console.log(error);
+                ElMessage.error("提交失败");
+            });
+            submitButtonLoading.value = false;
+            submitButtonText.value = "提交";
+        }
+    })
+
 }
 const getList = () => {
     loading.value = true;

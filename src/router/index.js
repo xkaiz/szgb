@@ -39,16 +39,16 @@ const routes = [
 				meta: { title: "计划管理" },
 			},
 			{
-				path: "/MuBan",
-				component: () => import("@/views/PaiBan/MuBan.vue"),
-				name: "MuBan",
-				meta: { title: "模板管理" },
-			},
-			{
 				path: "/PaiBan",
 				component: () => import("@/views/PaiBan/BanCi.vue"),
 				name: "PaiBan",
 				meta: { title: "班次管理" },
+			},
+			{
+				path: "/MuBan",
+				component: () => import("@/views/PaiBan/MuBan.vue"),
+				name: "MuBan",
+				meta: { title: "模板管理" },
 			},
 		],
 	},
@@ -59,12 +59,6 @@ const routes = [
 		name: "JiChuShuJu",
 		meta: { title: "基础数据" },
 		children: [
-			{
-				path: "/ZiDian",
-				component: () => import("@/views/JiChuShuJu/ZiDian.vue"),
-				name: "ZiDian",
-				meta: { title: "数据字典" },
-			},
 			{
 				path: "/RenYuan",
 				component: () => import("@/views/JiChuShuJu/RenYuan.vue"),
@@ -95,6 +89,21 @@ const routes = [
 				component: () => import("@/views/JiChuShuJu/QuanXian.vue"),
 				name: "QuanXian",
 				meta: { title: "权限管理" },
+			},
+		],
+	},
+	{
+		path: "/XiTongGuanLi",
+		component: Layout,
+		redirect: "/XiTongGuanLi",
+		name: "XiTongGuanLi",
+		meta: { title: "系统管理" },
+		children: [
+			{
+				path: "/ZiDian",
+				component: () => import("@/views/JiChuShuJu/ZiDian.vue"),
+				name: "ZiDian",
+				meta: { title: "数据字典" },
 			},
 		],
 	},
