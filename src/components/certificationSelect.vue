@@ -1,6 +1,6 @@
 <template>
-    <el-select v-model="certificationSelect.id" filterable remote reserve-keyword placeholder="请选择证书"
-        :remote-method="remoteMethod" :loading="loading" clearable @change="handelChange">
+    <el-select v-model="certificationSelect.id" filterable remote placeholder="请选择证书" :remote-method="remoteMethod"
+        :loading="loading" clearable @change="handelChange">
         <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
     </el-select>
 </template>

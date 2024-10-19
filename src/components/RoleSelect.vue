@@ -1,6 +1,6 @@
 <template>
-    <el-select v-model="roleSelect.id" filterable remote reserve-keyword placeholder="请选择角色"
-        :remote-method="remoteMethod" :loading="loading" clearable @change="handelChange">
+    <el-select v-model="roleSelect.id" filterable remote placeholder="请选择角色" :remote-method="remoteMethod"
+        :loading="loading" clearable @change="handelChange">
         <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
     </el-select>
 </template>
