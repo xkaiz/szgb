@@ -1,6 +1,7 @@
 <template>
-    <el-select v-model="userSelect.id" filterable remote placeholder="请选择用户" :remote-method="remoteMethod"
-        :loading="loading" clearable @change="handelChange">
+    <el-select v-model="userSelect.id" filterable remote remote-show-suffix clearable :multiple="props.multiple"
+        :collapse-tags="props.collapseTags" :collapse-tags-tooltip="props.collapseTagsTooltip"
+        :remote-method="remoteMethod" :loading="loading" @change="handelChange">
         <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
     </el-select>
 </template>
@@ -9,7 +10,7 @@
 import { onMounted, ref } from 'vue'
 import userAPI from '@/api/user'
 
-const props = defineProps(["id"])
+const props = defineProps(["id", "multiple", "collapseTags", "collapseTagsTooltip"])
 const emit = defineEmits(["model"]);
 
 const userSelect = ref({

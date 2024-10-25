@@ -52,7 +52,8 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="80%" draggable overflow>
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="80%" draggable overflow
+        :close-on-click-modal="false">
         <el-form :model="scheduleForm">
             <el-row :gutter="15">
                 <el-col :span="6">
@@ -66,9 +67,19 @@
                         <el-date-picker v-model="scheduleForm.date" placeholder="请选择日期"></el-date-picker>
                     </el-form-item>
                 </el-col>
-                <el-col :span="6">
-                    <el-form-item label="800M" prop="m800">
-                        <el-input v-model="scheduleForm.m800" placeholder="请输入800M"></el-input>
+                <el-col :span="4">
+                    <el-form-item label="800M 1" prop="m800">
+                        <el-input v-model="scheduleForm.m800Array[0]" placeholder="请输入800M"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="4">
+                    <el-form-item label="800M 2" prop="m800">
+                        <el-input v-model="scheduleForm.m800Array[1]" placeholder="请输入800M"></el-input>
+                    </el-form-item>
+                </el-col>
+                <el-col :span="4">
+                    <el-form-item label="800M 3" prop="m800">
+                        <el-input v-model="scheduleForm.m800Array[2]" placeholder="请输入800M"></el-input>
                     </el-form-item>
                 </el-col>
             </el-row>
@@ -181,20 +192,16 @@
                 @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column type="expand">
-                    <template #default="props">
-                        <p>目标：{{ props.row.goal }}</p>
-                        <p>备注：{{ props.row.remark }}</p>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip width="120" />
+                <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip width="100" />
                 <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip width="120" />
                 <el-table-column prop="location" label="任务地点" show-overflow-tooltip width="120" />
-                <el-table-column prop="scheduleType" label="班次类型" show-overflow-tooltip width="120" />
-                <el-table-column prop="startAt" label="开始时间" show-overflow-tooltip width="200" />
-                <el-table-column prop="endAt" label="结束时间" show-overflow-tooltip width="200" />
-                <el-table-column prop="" label="负责人" show-overflow-tooltip />
-                <el-table-column prop="" label="参与人员" show-overflow-tooltip />
+                <el-table-column prop="scheduleType" label="班次类型" show-overflow-tooltip width="100" />
+                <el-table-column prop="startAt" label="开始时间" show-overflow-tooltip width="180" />
+                <el-table-column prop="endAt" label="结束时间" show-overflow-tooltip width="180" />
+                <el-table-column prop="" label="负责人" show-overflow-tooltip width="120" />
+                <el-table-column prop="" label="参与人员" show-overflow-tooltip width="300" />
+                <el-table-column prop="goal" label="目标" show-overflow-tooltip width="200" />
+                <el-table-column prop="remark" label="备注" show-overflow-tooltip width="200" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="editSchedulePlan(scope.row)">
@@ -207,35 +214,28 @@
             </el-table>
         </el-form>
         <template #footer>
-            <div class="dialog-footer">
-                <el-button @click="dialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
-                <el-button type="primary" @click="submit()" :loading="submitButtonLoading" v-if="!roleLevelBoolean">
-                    {{ submitButtonText }}
-                </el-button>
-            </div>
+            <el-button @click="dialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+            <el-button type="primary" @click="submit(1)" :loading="submitButtonLoading" v-if="!roleLevelBoolean">
+                {{ submitButtonText }}
+            </el-button>
         </template>
     </el-dialog>
 
     <div class="drawer">
-        <el-drawer v-model="drawerVisible" direction="ltr" size="40%">
+        <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false">
             <template #header>
                 <h3>编辑计划</h3>
             </template>
-            <el-form :model="scheduleForm">
+            <el-form :model="schedulePlanForm" label-width="80">
                 <el-row :gutter="15">
                     <el-col :span="12">
                         <el-form-item label="任务类型" prop="taskType">
-                            <!-- <el-select v-model="scheduleForm.taskType" :disabled="roleLevelBoolean" filterable
-                                default-first-option>
-                                <el-option v-for="item in taskTypeOptions" :key="item.value" :label="item.label"
-                                    :value="item.value" />
-                            </el-select> -->
-                            <DictSelect @model="setModel" dict="任务类型/taskType"></DictSelect>
+                            <DictSelect @model="setModel" :form="schedulePlanForm" dict="任务类型/taskType"></DictSelect>
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="任务名称" prop="taskName">
-                            <el-select v-model="scheduleForm.taskName" filterable allow-create default-first-option
+                            <el-select v-model="schedulePlanForm.taskName" filterable allow-create default-first-option
                                 :disabled="roleLevelBoolean">
                             </el-select>
                         </el-form-item>
@@ -244,35 +244,63 @@
                 <el-row :gutter="15">
                     <el-col :span="12">
                         <el-form-item label="任务地点" prop="location">
-                            <el-select v-model="scheduleForm.location" filterable allow-create default-first-option
+                            <el-select v-model="schedulePlanForm.location" filterable allow-create default-first-option
                                 :disabled="roleLevelBoolean">
                             </el-select>
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="班次类型" prop="scheduleType" filterable default-first-option>
-                            <el-select v-model="scheduleForm.scheduleType" :disabled="roleLevelBoolean">
-                                <el-option v-for="item in scheduleTypeOptions" :key="item.value" :label="item.label"
-                                    :value="item.value" />
-                            </el-select>
+                            <DictSelect @model="setModel" :form="schedulePlanForm" dict="班次类型/scheduleType">
+                            </DictSelect>
                         </el-form-item>
                     </el-col>
                 </el-row>
-                <el-row :gutter="15" v-if="scheduleForm.scheduleType == 4">
+                <el-row :gutter="15" v-if="schedulePlanForm.scheduleType == 4">
                     <el-col :span="12">
                         <el-form-item label="开始时间" prop="startAt">
-                            <el-date-picker v-model="scheduleForm.startAt" :disabled="roleLevelBoolean" type="datetime"
-                                placeholder="选择日期时间" />
+                            <DictSelect @model="setModel" :form="schedulePlanForm" dict="工作时间/startAt"></DictSelect>
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="结束时间" prop="endAt">
-                            <el-date-picker v-model="scheduleForm.endAt" :disabled="roleLevelBoolean" type="datetime"
-                                placeholder="选择日期时间" />
+                            <DictSelect @model="setModel" :form="schedulePlanForm" dict="工作时间/endAt"></DictSelect>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="15">
+                    <el-col :span="12">
+                        <el-form-item label="负责人" prop="">
+                            <UserSelect @model="setModel"></UserSelect>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="参与人员" prop="">
+                            <UserSelect @model="setModel" multiple collapse-tags collapse-tags-tooltip></UserSelect>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="15">
+                    <el-col :span="24">
+                        <el-form-item label="目标" prop="goal">
+                            <el-input v-model="schedulePlanForm.goal" style="width: 100%" rows="5" type="textarea" />
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="15">
+                    <el-col :span="24">
+                        <el-form-item label="备注" prop="remark">
+                            <el-input v-model="schedulePlanForm.remark" style="width: 100%" rows="5" type="textarea" />
                         </el-form-item>
                     </el-col>
                 </el-row>
             </el-form>
+            <template #footer>
+                <el-button @click="drawerVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+                <el-button type="primary" @click="submit(2)" :loading="submitButtonLoading" v-if="!roleLevelBoolean">
+                    {{ submitButtonText }}
+                </el-button>
+            </template>
         </el-drawer>
     </div>
 </template>
@@ -289,7 +317,7 @@ import schedulePlanAPI from "@/api/SchedulePlan";
 import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
-import { id } from "element-plus/es/locales.mjs";
+import UserSelect from "../../components/UserSelect.vue";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -313,8 +341,6 @@ const submitButtonText = ref("提交");
 const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
-
-const roleSelectRef = ref(null);
 
 const setModel = (value) => {
     if (value.type == "department") {
@@ -352,6 +378,7 @@ const scheduleForm = ref({
     },
     date: "",
     m800: "",
+    m800Array: [],
     dayGaffer: "",
     dayLeader: "",
     dayContact: "",
@@ -370,67 +397,6 @@ const scheduleForm = ref({
     }
 });
 
-const dayOptions = ref([])
-const nightOptions = ref([])
-const taskTypeOptions = ref([])
-const scheduleTypeOptions = ref([])
-
-onMounted(() => {
-    const token = cookies.get("token");
-    if (token == null || token == "") {
-        window.location.href = "/login?path=JiHua";
-        return
-    }
-    if (store.dict == undefined) {
-        dictAPI.list(dict.value).then((res) => {
-            store.setDict(buildTree(res.data.dictTree));
-            getScheduleList();
-        })
-    } else {
-        getScheduleList();
-    }
-    initDictSelect()
-});
-
-const initDictSelect = () => {
-    taskTypeOptions.value = store.dict.find(item => item.label == "任务类型").dictChildren;
-    scheduleTypeOptions.value = store.dict.find(item => item.label == "班次类型").dictChildren;
-}
-
-const search = () => {
-    getScheduleList();
-}
-
-const clear = () => {
-    userSelectRef.value.clear();
-    roleSelectRef.value.clear();
-    resetForm();
-    getScheduleList();
-}
-
-const resetForm = () => {
-    scheduleForm.value = {
-        id: "",
-        schedule: {
-            id: "",
-            name: "",
-        },
-        taskType: 0,
-        taskName: "",
-        location: "",
-        scheduleType: "",
-        startAt: "",
-        endAt: "",
-        goal: "",
-        remark: "",
-        version: "",
-        page: {
-            pageNo: 1,
-            pageSize: 20,
-            orderBy: ""
-        }
-    }
-}
 
 const schedulePlanForm = ref({
     id: "",
@@ -453,14 +419,76 @@ const schedulePlanForm = ref({
     }
 });
 
+const dayOptions = ref([])
+const nightOptions = ref([])
+
+onMounted(() => {
+    const token = cookies.get("token");
+    if (token == null || token == "") {
+        window.location.href = "/login?path=JiHua";
+        return
+    }
+    getScheduleList();
+});
+
+const resetForm = () => {
+    scheduleForm.value = {
+        id: "",
+        department: {
+            id: "",
+            name: "",
+        },
+        date: "",
+        m800: "",
+        dayGaffer: "",
+        dayLeader: "",
+        dayContact: "",
+        dayMateriel: "",
+        dayOther: "",
+        nightGaffer: "",
+        nightLeader: "",
+        nightContact: "",
+        nightMateriel: "",
+        nightOther: "",
+        version: "",
+        page: {
+            pageNo: 1,
+            pageSize: 20,
+            orderBy: ""
+        }
+    }
+    schedulePlanForm.value = {
+        id: "",
+        schedule: {
+            id: "",
+        },
+        taskType: 0,
+        taskName: "",
+        location: "",
+        scheduleType: "",
+        startAt: "",
+        endAt: "",
+        goal: "",
+        remark: "",
+        version: "",
+        page: {
+            pageNo: 1,
+            pageSize: 20,
+            orderBy: ""
+        }
+    }
+}
+
+
 const addSchedule = () => {
     resetForm()
     dialogVisible.value = true;
-    dialogTitle.value = "新建用户权限";
+    dialogTitle.value = "新建班次";
 }
 
 const editSchedule = (row) => {
     scheduleForm.value = row;
+    scheduleForm.value.m800Array = row.m800.split(",")
     getSchedulePlanList(row.id)
     dialogVisible.value = true;
     dialogTitle.value = editButtonText.value + "班次";
@@ -489,14 +517,14 @@ const deleteSchedule = (row) => {
 }
 
 const addSchedulePlan = () => {
+    resetForm()
     drawerVisible.value = true;
 }
 
 const editSchedulePlan = (row) => {
-    scheduleForm.value = row;
-    getSchedulePlanList(row.id)
-    dialogVisible.value = true;
-    dialogTitle.value = editButtonText.value + "班次";
+    schedulePlanForm.value = row;
+    console.log(schedulePlanForm.value);
+    drawerVisible.value = true;
 }
 
 const deleteSchedulePlan = (row) => {
@@ -521,17 +549,29 @@ const deleteSchedulePlan = (row) => {
     }).catch(() => { })
 }
 
-const submit = () => {
+const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
-    userRoleAPI.save(scheduleForm.value).then((res) => {
-        ElMessage.success("提交成功");
-        dialogVisible.value = false;
-        getScheduleList();
-    }).catch((error) => {
-        console.log(error);
-        ElMessage.error("提交失败");
-    });
+    if (type == 1) {
+        scheduleAPI.save(scheduleForm.value).then((res) => {
+            ElMessage.success("提交成功");
+            dialogVisible.value = false;
+            getScheduleList();
+        }).catch((error) => {
+            console.log(error);
+            ElMessage.error("提交失败");
+        });
+    } else if (type == 2) {
+        schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
+            ElMessage.success("提交成功");
+            drawerVisible.value = false;
+            getScheduleList();
+        }).catch((error) => {
+            console.log(error);
+            ElMessage.error("提交失败");
+        });
+    }
+
     submitButtonLoading.value = false;
     submitButtonText.value = "提交";
 }
@@ -552,14 +592,18 @@ const getSchedulePlanList = (scheduleID) => {
     schedulePlanLoading.value = true;
     schedulePlanForm.value.schedule.id = scheduleID;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
-        const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
-        const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
-        res.data.page.list.forEach((item) => {
-            item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
-            item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
-        });
+        // const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
+        // const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
+        // res.data.page.list.forEach((item) => {
+        //     item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
+        //     item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
+        // });
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
+        subTableData.value.forEach(element => {
+            element.startAt = formatDate(new Date(new Date(element.startAt).getTime() + 8 * 60 * 60 * 1000), 1);
+            element.endAt = formatDate(new Date(new Date(element.endAt).getTime() + 8 * 60 * 60 * 1000), 1);
+        });
         schedulePlanLoading.value = false;
     });
 }
@@ -568,7 +612,9 @@ const formatDate = (date, num, type) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + num).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : ` ${hours}:${minutes}:00`);
 };
 
 const refreshTable = () => {

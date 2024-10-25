@@ -1,6 +1,6 @@
 <template>
     <el-select v-model="dictSelect.id" filterable :loading="loading" clearable @change="handelChange">
-        <el-option v-for="item in options" :key="item.id" :label="item.label" :value="item.id" />
+        <el-option v-for="item in options" :key="item.id" :label="item.label" :value="item.value" />
     </el-select>
 </template>
 
@@ -11,7 +11,7 @@ const store = useStore();
 import dictAPI from '@/api/dict';
 import { buildTree } from "@/utils/BuildTree";
 
-const props = defineProps(["dict"])
+const props = defineProps(["dict", "form"])
 const emit = defineEmits(["model"]);
 
 const propsDict = ref({
@@ -26,8 +26,6 @@ const loading = ref(true);
 
 
 onMounted(() => {
-    propsDict.value.cname = props.dict.split("/")[0];
-    propsDict.value.name = props.dict.split("/")[1];
     getDictList();
 });
 
@@ -42,10 +40,12 @@ const dict = ref({
 const options = ref([]);
 const getDictList = () => {
     loading.value = true;
+    propsDict.value.cname = props.dict.split("/")[0];
+    propsDict.value.name = props.dict.split("/")[1];
     dictAPI.list(dict.value).then((res) => {
         store.setDict(buildTree(res.data.dictTree));
         options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
-        console.log(options.value);
+        dictSelect.value.id = options.value.find(item => item.value == props.form[propsDict.value.name]).value
         loading.value = false;
     }).catch((error) => {
         console.log(error);

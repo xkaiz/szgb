@@ -27,4 +27,12 @@ export default {
 			params: { ids: ids },
 		});
 	},
+
+	test(data) {
+		return request({
+			url: "/schedule/plan/get",
+			method: "post",
+			data: data,
+		});
+	},
 };
