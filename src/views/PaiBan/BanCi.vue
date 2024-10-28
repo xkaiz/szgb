@@ -9,7 +9,7 @@
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
                 <el-button-group>
-                    <el-button type="default" @click="refreshTable">刷新</el-button>
+                    <el-button type="default" @click="refreshScheduleTable">刷新</el-button>
                 </el-button-group>
             </el-row>
             <el-table class="table" :data="tableData" stripe v-loading="scheduleLoading"
@@ -19,7 +19,7 @@
                 <el-table-column prop="department.name" label="排班部门" show-overflow-tooltip sortable="custom"
                     width="200" />
                 <el-table-column prop="date" label="日期" show-overflow-tooltip sortable="custom" width="150" />
-                <el-table-column prop="m800" label="800M" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="m800" label="800M" show-overflow-tooltip sortable="custom" width="200" />
                 <el-table-column prop="dayGaffer" label="白班领班" show-overflow-tooltip sortable="custom" width="150" />
                 <el-table-column prop="dayLeader" label="白班抢修组长" show-overflow-tooltip sortable="custom" width="150" />
                 <el-table-column prop="dayContact" label="白班信息联络" show-overflow-tooltip sortable="custom" width="150" />
@@ -52,8 +52,8 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="80%" draggable overflow
-        :close-on-click-modal="false">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="60%" draggable overflow :close-on-click-modal="false"
+        v-if="dialogVisible">
         <el-form :model="scheduleForm">
             <el-row :gutter="15">
                 <el-col :span="6">
@@ -184,22 +184,24 @@
                     <el-button type="danger" plain :disabled="deleteButtonDisabled" @click="deleteSchedulePlan"
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
-                <el-button-group>
-                    <el-button type="default" @click="refreshTable">刷新</el-button>
-                </el-button-group>
+                <div>
+                    <el-button type="success">自动排班</el-button>
+                    <el-button type="default" @click="refreshSchedulePlanTable">刷新</el-button>
+                </div>
             </el-row>
-            <el-table :data="subTableData" stripe v-loading="scheduleLoading" @selection-change="handleSelectionChange"
-                @sort-change="handleSortChange">
+            <el-table :data="subTableData" stripe v-loading="schedulePlanLoading"
+                @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
+                <el-table-column prop="" label="负责人" show-overflow-tooltip width="120" fixed="left" />
+                <el-table-column prop="" label="参与人员" show-overflow-tooltip width="300" fixed="left" />
                 <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip width="100" />
                 <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip width="120" />
                 <el-table-column prop="location" label="任务地点" show-overflow-tooltip width="120" />
                 <el-table-column prop="scheduleType" label="班次类型" show-overflow-tooltip width="100" />
                 <el-table-column prop="startAt" label="开始时间" show-overflow-tooltip width="180" />
                 <el-table-column prop="endAt" label="结束时间" show-overflow-tooltip width="180" />
-                <el-table-column prop="" label="负责人" show-overflow-tooltip width="120" />
-                <el-table-column prop="" label="参与人员" show-overflow-tooltip width="300" />
+
                 <el-table-column prop="goal" label="目标" show-overflow-tooltip width="200" />
                 <el-table-column prop="remark" label="备注" show-overflow-tooltip width="200" />
                 <el-table-column fixed="right" label="操作" width="120">
@@ -222,7 +224,8 @@
     </el-dialog>
 
     <div class="drawer">
-        <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false">
+        <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false"
+            v-if="drawerVisible">
             <template #header>
                 <h3>编辑计划</h3>
             </template>
@@ -318,6 +321,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
 import UserSelect from "../../components/UserSelect.vue";
+import { da } from "element-plus/es/locales.mjs";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -370,7 +374,7 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-const scheduleForm = ref({
+const initialScheduleForm = {
     id: "",
     department: {
         id: "",
@@ -378,7 +382,7 @@ const scheduleForm = ref({
     },
     date: "",
     m800: "",
-    m800Array: [],
+    m800Array: ["", "", ""],
     dayGaffer: "",
     dayLeader: "",
     dayContact: "",
@@ -395,15 +399,14 @@ const scheduleForm = ref({
         pageSize: 20,
         orderBy: ""
     }
-});
+};
 
-
-const schedulePlanForm = ref({
+const initialSchedulePlanForm = {
     id: "",
     schedule: {
         id: "",
     },
-    taskType: 0,
+    taskType: "",
     taskName: "",
     location: "",
     scheduleType: "",
@@ -417,7 +420,10 @@ const schedulePlanForm = ref({
         pageSize: 20,
         orderBy: ""
     }
-});
+};
+
+const scheduleForm = ref({ ...initialScheduleForm });
+const schedulePlanForm = ref({ ...initialSchedulePlanForm });
 
 const dayOptions = ref([])
 const nightOptions = ref([])
@@ -432,56 +438,15 @@ onMounted(() => {
 });
 
 const resetForm = () => {
-    scheduleForm.value = {
-        id: "",
-        department: {
-            id: "",
-            name: "",
-        },
-        date: "",
-        m800: "",
-        dayGaffer: "",
-        dayLeader: "",
-        dayContact: "",
-        dayMateriel: "",
-        dayOther: "",
-        nightGaffer: "",
-        nightLeader: "",
-        nightContact: "",
-        nightMateriel: "",
-        nightOther: "",
-        version: "",
-        page: {
-            pageNo: 1,
-            pageSize: 20,
-            orderBy: ""
-        }
-    }
-    schedulePlanForm.value = {
-        id: "",
-        schedule: {
-            id: "",
-        },
-        taskType: 0,
-        taskName: "",
-        location: "",
-        scheduleType: "",
-        startAt: "",
-        endAt: "",
-        goal: "",
-        remark: "",
-        version: "",
-        page: {
-            pageNo: 1,
-            pageSize: 20,
-            orderBy: ""
-        }
-    }
+    scheduleForm.value = { ...initialScheduleForm };
+    schedulePlanForm.value = { ...initialSchedulePlanForm };
 }
 
 
 const addSchedule = () => {
     resetForm()
+    scheduleForm.value.department.id = store.user.department.id
+    schedulePlanLoading.value = false
     dialogVisible.value = true;
     dialogTitle.value = "新建班次";
 }
@@ -523,7 +488,6 @@ const addSchedulePlan = () => {
 
 const editSchedulePlan = (row) => {
     schedulePlanForm.value = row;
-    console.log(schedulePlanForm.value);
     drawerVisible.value = true;
 }
 
@@ -553,6 +517,8 @@ const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
     if (type == 1) {
+        scheduleForm.value.date = formatDate(scheduleForm.value.date, 1, 1)
+        scheduleForm.value.m800 = scheduleForm.value.m800Array.join(",")
         scheduleAPI.save(scheduleForm.value).then((res) => {
             ElMessage.success("提交成功");
             dialogVisible.value = false;
@@ -579,7 +545,7 @@ const getScheduleList = () => {
     scheduleLoading.value = true;
     scheduleAPI.list(scheduleForm.value).then((res) => {
         res.data.page.list.forEach((item) => {
-            item.date = formatDate(new Date(item.date), 1)
+            item.date = formatDate(item.date, 1)
         });
         store.setSchedule(res.data.page.list);
         total.value = res.data.page.count;
@@ -592,35 +558,49 @@ const getSchedulePlanList = (scheduleID) => {
     schedulePlanLoading.value = true;
     schedulePlanForm.value.schedule.id = scheduleID;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
-        // const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
-        // const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
-        // res.data.page.list.forEach((item) => {
-        //     item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
-        //     item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
-        // });
+        const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
+        const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
+        res.data.page.list.forEach((item) => {
+            item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
+            item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
+        });
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
         subTableData.value.forEach(element => {
-            element.startAt = formatDate(new Date(new Date(element.startAt).getTime() + 8 * 60 * 60 * 1000), 1);
-            element.endAt = formatDate(new Date(new Date(element.endAt).getTime() + 8 * 60 * 60 * 1000), 1);
+            element.startAt = formatDate(element.startAt, 1, 1);
+            element.endAt = formatDate(element.endAt, 1, 1);
         });
         schedulePlanLoading.value = false;
     });
 }
 
-const formatDate = (date, num, type) => {
+const formatDate = (date, num = 1, type = null) => {
+    // date = new Date(date);
+    date = new Date(new Date(date).getTime() + 8 * 60 * 60 * 1000);
     const year = date.getFullYear();
     const month = String(date.getMonth() + num).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : ` ${hours}:${minutes}:00`);
+    let time = ""
+    if (type == 0) {
+        time = " 00:00:00"
+    } else if (type == 1) {
+        time = " " + hours + ":" + minutes + ":00"
+    }
+    return `${year}-${month}-${day}${time}`;
 };
 
-const refreshTable = () => {
+const refreshScheduleTable = () => {
     scheduleForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getScheduleList();
+};
+
+const refreshSchedulePlanTable = () => {
+    schedulePlanForm.value.page.pageNo = 1;
+    pageNo.value = 1;
+    getSchedulePlanList();
 };
 
 const handleSizeChange = (value) => {

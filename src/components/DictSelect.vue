@@ -45,7 +45,9 @@ const getDictList = () => {
     dictAPI.list(dict.value).then((res) => {
         store.setDict(buildTree(res.data.dictTree));
         options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
-        dictSelect.value.id = options.value.find(item => item.value == props.form[propsDict.value.name]).value
+        if (props.form[propsDict.value.name] != "") {
+            dictSelect.value.id = options.value.find(item => item.label == props.form[propsDict.value.name]).value
+        }
         loading.value = false;
     }).catch((error) => {
         console.log(error);
