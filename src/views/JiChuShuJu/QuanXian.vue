@@ -102,9 +102,9 @@ const IDs = ref("");
 const userSelectRef = ref(null);
 const roleSelectRef = ref(null);
 
-const setModel = (value) => {
-    userRoleForm.value[value.type].id = value.id;
-    console.log(userRoleForm.value);
+const setModel = (data) => {
+    console.log("子组件传递的数据：", data);
+    userRoleForm.value[data.type].id = data.value;
 }
 
 

@@ -1,7 +1,7 @@
 import request from "@/utils/Request";
 
 export default {
-	//获取角色列表
+	//获取班次列表
 	list(data) {
 		return request({
 			url: "/schedule/list",
@@ -10,7 +10,7 @@ export default {
 		});
 	},
 
-	//更新角色
+	//更新班次
 	save(data) {
 		return request({
 			url: "/schedule/save",
@@ -19,7 +19,7 @@ export default {
 		});
 	},
 
-	//删除角色
+	//删除班次
 	delete(ids) {
 		return request({
 			url: "/schedule/delete",

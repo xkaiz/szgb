@@ -1,6 +1,6 @@
 <template>
-    <el-select v-model="dictSelect.id" filterable :loading="loading" clearable @change="handelChange">
-        <el-option v-for="item in options" :key="item.id" :label="item.label" :value="item.value" />
+    <el-select v-model="dictSelect" filterable :loading="loading" clearable @change="handelChange">
+        <el-option v-for="item in options" :key="item.id" :label="item.label" :value="item.label" />
     </el-select>
 </template>
 
@@ -19,11 +19,8 @@ const propsDict = ref({
     name: ""
 })
 
-const dictSelect = ref({
-    id: "",
-})
+const dictSelect = ref("")
 const loading = ref(true);
-
 
 onMounted(() => {
     getDictList();
@@ -45,8 +42,9 @@ const getDictList = () => {
     dictAPI.list(dict.value).then((res) => {
         store.setDict(buildTree(res.data.dictTree));
         options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
+        console.log(props.form[propsDict.value.name]);
         if (props.form[propsDict.value.name] != "") {
-            dictSelect.value.id = options.value.find(item => item.label == props.form[propsDict.value.name]).value
+            dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
         }
         loading.value = false;
     }).catch((error) => {
@@ -54,12 +52,16 @@ const getDictList = () => {
     });
 };
 
-const handelChange = (value) => {
-    emit("model", { type: propsDict.value.name, id: value });
+const handelChange = (data) => {
+    if (propsDict.value.name == "scheduleType") {
+        props.form.startAt = ""
+        props.form.endAt = ""
+    }
+    emit("model", { type: propsDict.value.name, value: data });
 };
 
 const clear = () => {
-    dictSelect.value.id = "";
+    dictSelect.value = "";
 };
 defineExpose({
     clear

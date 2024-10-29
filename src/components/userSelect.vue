@@ -53,8 +53,8 @@ const getList = () => {
     });
 };
 
-const handelChange = (value) => {
-    emit("model", { type: "user", id: value });
+const handelChange = (data) => {
+    emit("model", { type: "user", value: data });
 };
 
 const clear = () => {

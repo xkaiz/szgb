@@ -100,6 +100,7 @@ import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
 import UserSelect from "@/components/UserSelect.vue";
 import CertificationSelect from "@/components/CertificationSelect.vue";
+import { formatDate } from "@/utils/Format";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -120,9 +121,9 @@ const IDs = ref("");
 const userSelectRef = ref(null);
 const certificationSelectRef = ref(null);
 
-const setModel = (value) => {
-    userCertificationForm.value[value.type].id = value.id;
-    console.log(userCertificationForm.value);
+const setModel = (data) => {
+    console.log("子组件传递的数据：", data);
+    userCertificationForm.value[data.type].id = data.value;
 }
 
 
@@ -247,8 +248,8 @@ const del = (row) => {
 }
 
 const submit = () => {
-    userCertificationForm.value.gotAt = formatDate(new Date(userCertificationForm.value.gotAt), 1, 0)
-    userCertificationForm.value.expiredAt = formatDate(new Date(userCertificationForm.value.expiredAt), 1, 0)
+    userCertificationForm.value.gotAt = formatDate(new Date(userCertificationForm.value.gotAt), 0)
+    userCertificationForm.value.expiredAt = formatDate(new Date(userCertificationForm.value.expiredAt), 0)
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
     userCertificationAPI.save(userCertificationForm.value).then((res) => {
@@ -266,8 +267,8 @@ const getList = () => {
     loading.value = true;
     userCertificationAPI.list(userCertificationForm.value).then((res) => {
         res.data.page.list.map((item) => {
-            item.gotAt = formatDate(new Date(item.gotAt), 1)
-            item.expiredAt = formatDate(new Date(item.expiredAt), 1)
+            item.gotAt = formatDate(new Date(item.gotAt))
+            item.expiredAt = formatDate(new Date(item.expiredAt))
         });
         store.setUserCertification(res.data.page.list);
         total.value = res.data.page.count;
@@ -276,12 +277,21 @@ const getList = () => {
     });
 };
 
-const formatDate = (date, num, type) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + num).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
-};
+// const formatDate = (date, type) => {
+//     date = new Date(date);
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, '0');
+//     const day = String(date.getDate()).padStart(2, '0');
+//     const hours = String(date.getHours()).padStart(2, '0');
+//     const minutes = String(date.getMinutes()).padStart(2, '0');
+//     let time = ""
+//     if (type == 0) {
+//         time = " 00:00:00"
+//     } else if (type == 1) {
+//         time = " " + hours + ":" + minutes + ":00"
+//     }
+//     return `${year}-${month}-${day}${time}`;
+// };
 
 
 const refreshTable = () => {
@@ -338,7 +348,7 @@ const getTextType = (value) => {
 }
 
 const handleGotAtChange = (value) => {
-    userCertificationForm.value.gotAt = formatDate(value, 1, 0);
+    userCertificationForm.value.gotAt = formatDate(value, 0);
     getUserCertification()
 }
 
@@ -347,9 +357,9 @@ const getUserCertification = () => {
         certificationAPI.getById(userCertificationForm.value.certification).then((res) => {
             let period = res.data.data.period;
             if (period == -1) {
-                userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 1, 0)
+                userCertificationForm.value.expiredAt = formatDate(new Date("2999/1/1"), 0)
             } else {
-                userCertificationForm.value.expiredAt = formatDate(new Date(new Date(userCertificationForm.value.gotAt).getTime() + period * 24 * 60 * 60 * 1000), 0, 0)
+                userCertificationForm.value.expiredAt = formatDate(new Date(new Date(userCertificationForm.value.gotAt).getTime() + period * 24 * 60 * 60 * 1000), 0)
             }
         });
     }

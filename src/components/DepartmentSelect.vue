@@ -21,7 +21,7 @@ onMounted(() => {
     }
 });
 
-const handelChange = (value) => {
-    emit("model", { type: "department", id: value });
+const handelChange = (data) => {
+    emit("model", { type: "department", value: data });
 };
 </script>

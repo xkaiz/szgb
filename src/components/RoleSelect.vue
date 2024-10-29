@@ -48,8 +48,8 @@ const getList = () => {
     });
 };
 
-const handelChange = (value) => {
-    emit("model", { type: "role", id: value });
+const handelChange = (data) => {
+    emit("model", { type: "role", value: data });
 };
 
 const clear = () => {

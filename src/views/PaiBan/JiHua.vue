@@ -98,9 +98,9 @@ const IDs = ref("");
 const userSelectRef = ref(null);
 const roleSelectRef = ref(null);
 
-const setModel = (value) => {
-    schedulePlanForm.value[value.type].id = value.id;
-    console.log(schedulePlanForm.value);
+const setModel = (data) => {
+    console.log("子组件传递的数据：", data);
+    schedulePlanForm.value[data.type].id = data.value;
 }
 
 
@@ -270,11 +270,20 @@ const getList = () => {
     });
 };
 
-const formatDate = (date, num, type) => {
+const formatDate = (date, type) => {
+    date = new Date(date);
     const year = date.getFullYear();
-    const month = String(date.getMonth() + num).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}` + (type == 0 ? " 00:00:00" : "");
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    let time = ""
+    if (type == 0) {
+        time = " 00:00:00"
+    } else if (type == 1) {
+        time = " " + hours + ":" + minutes + ":00"
+    }
+    return `${year}-${month}-${day}${time}`;
 };
 
 const refreshTable = () => {

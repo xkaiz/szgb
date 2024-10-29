@@ -8,9 +8,10 @@
                     <el-button type="danger" plain :disabled="deleteButtonDisabled" @click="deleteSchedule"
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
-                <el-button-group>
+                <div>
+                    <el-button type="success" @click="exportSchedule">导出</el-button>
                     <el-button type="default" @click="refreshScheduleTable">刷新</el-button>
-                </el-button-group>
+                </div>
             </el-row>
             <el-table class="table" :data="tableData" stripe v-loading="scheduleLoading"
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
@@ -259,17 +260,23 @@
                         </el-form-item>
                     </el-col>
                 </el-row>
-                <el-row :gutter="15" v-if="schedulePlanForm.scheduleType == 4">
+                <el-row :gutter="15" v-if="schedulePlanForm.scheduleType == '间接'">
                     <el-col :span="12">
                         <el-form-item label="开始时间" prop="startAt">
                             <DictSelect @model="setModel" :form="schedulePlanForm" dict="工作时间/startAt"></DictSelect>
                         </el-form-item>
                     </el-col>
+
+                </el-row>
+                <el-row :gutter="15" v-if="schedulePlanForm.scheduleType == '间接'">
                     <el-col :span="12">
                         <el-form-item label="结束时间" prop="endAt">
                             <DictSelect @model="setModel" :form="schedulePlanForm" dict="工作时间/endAt"></DictSelect>
                         </el-form-item>
                     </el-col>
+                    <el-form-item label="次日" prop="nextDay">
+                        <el-switch v-model="nextDay" />
+                    </el-form-item>
                 </el-row>
                 <el-row :gutter="15">
                     <el-col :span="12">
@@ -277,9 +284,13 @@
                             <UserSelect @model="setModel"></UserSelect>
                         </el-form-item>
                     </el-col>
-                    <el-col :span="12">
+                </el-row>
+                <el-row :gutter="15">
+                    <el-col :span="24">
                         <el-form-item label="参与人员" prop="">
-                            <UserSelect @model="setModel" multiple collapse-tags collapse-tags-tooltip></UserSelect>
+                            <UserSelect @model="setModel" multiple collapse-tags collapse-tags-tooltip
+                                :max-collapse-tags="4" style="width: 100%;">
+                            </UserSelect>
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -320,8 +331,9 @@ import schedulePlanAPI from "@/api/SchedulePlan";
 import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
-import UserSelect from "../../components/UserSelect.vue";
-import { da } from "element-plus/es/locales.mjs";
+import UserSelect from "@/components/UserSelect.vue";
+import { formatDate } from "@/utils/Format";
+import { id } from "element-plus/es/locales.mjs";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -346,13 +358,12 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
-const setModel = (value) => {
-    if (value.type == "department") {
-        scheduleForm.value[value.type].id = value.id;
-        console.log(scheduleForm.value);
+const setModel = (data) => {
+    console.log("子组件传递的数据：", data);
+    if (data.type == "department") {
+        scheduleForm.value[data.type].id = data.value;
     } else {
-        schedulePlanForm.value[value.type] = value.id;
-        console.log(schedulePlanForm.value);
+        schedulePlanForm.value[data.type] = data.value;
     }
 }
 
@@ -373,6 +384,24 @@ const roleLevelBoolean = computed(() => {
         return true;
     }
 });
+
+const scheduleColumns = [
+    {
+        id: 1,
+        label: "常白班",
+        value: "8:30-17:30",
+    },
+    {
+        id: 2,
+        label: "大白班",
+        value: "8:30-20:30",
+    },
+    {
+        id: 3,
+        label: "夜班",
+        value: "20:30-06:30"
+    }
+];
 
 const initialScheduleForm = {
     id: "",
@@ -425,8 +454,13 @@ const initialSchedulePlanForm = {
 const scheduleForm = ref({ ...initialScheduleForm });
 const schedulePlanForm = ref({ ...initialSchedulePlanForm });
 
+const nextDay = ref(false)
+
 const dayOptions = ref([])
 const nightOptions = ref([])
+
+const taskType = ref([])
+const scheduleType = ref([])
 
 onMounted(() => {
     const token = cookies.get("token");
@@ -434,17 +468,22 @@ onMounted(() => {
         window.location.href = "/login?path=JiHua";
         return
     }
+    initDictSelectOptions()
     getScheduleList();
 });
 
-const resetForm = () => {
+const resetScheduleForm = () => {
     scheduleForm.value = { ...initialScheduleForm };
+}
+
+const resetSchedulePlanForm = () => {
     schedulePlanForm.value = { ...initialSchedulePlanForm };
 }
 
 
 const addSchedule = () => {
-    resetForm()
+    resetScheduleForm()
+    subTableData.value = []
     scheduleForm.value.department.id = store.user.department.id
     schedulePlanLoading.value = false
     dialogVisible.value = true;
@@ -482,12 +521,13 @@ const deleteSchedule = (row) => {
 }
 
 const addSchedulePlan = () => {
-    resetForm()
+    resetSchedulePlanForm()
+    schedulePlanForm.value.schedule.id = scheduleForm.value.id
     drawerVisible.value = true;
 }
 
 const editSchedulePlan = (row) => {
-    schedulePlanForm.value = row;
+    schedulePlanForm.value = JSON.parse(JSON.stringify(row));
     drawerVisible.value = true;
 }
 
@@ -505,7 +545,7 @@ const deleteSchedulePlan = (row) => {
         }
         schedulePlanAPI.delete(IDs.value).then((res) => {
             ElMessage.success("删除成功");
-            getScheduleList();
+            getSchedulePlanList(scheduleForm.value.id);
         }).catch((error) => {
             console.log(error);
             ElMessage.error("删除失败");
@@ -513,11 +553,21 @@ const deleteSchedulePlan = (row) => {
     }).catch(() => { })
 }
 
+const initDictSelectOptions = () => {
+    taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
+    scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
+}
+
+const isNumeric = (value) => {
+    const num = Number(value);
+    return !isNaN(num) && isFinite(num);
+};
+
 const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
     if (type == 1) {
-        scheduleForm.value.date = formatDate(scheduleForm.value.date, 1, 1)
+        scheduleForm.value.date = formatDate(scheduleForm.value.date, 0)
         scheduleForm.value.m800 = scheduleForm.value.m800Array.join(",")
         scheduleAPI.save(scheduleForm.value).then((res) => {
             ElMessage.success("提交成功");
@@ -528,10 +578,33 @@ const submit = (type) => {
             ElMessage.error("提交失败");
         });
     } else if (type == 2) {
+        // if (!isNumeric(schedulePlanForm.value.taskType)) {
+        //     schedulePlanForm.value.taskType = taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value
+        // }
+        // if (!isNumeric(schedulePlanForm.value.scheduleType)) {
+        //     schedulePlanForm.value.scheduleType = scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value
+        // }
+        schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
+        schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
+        const nextDate = new Date(scheduleForm.value.date);
+        if (schedulePlanForm.value.startAt.split(' ').length == 1 && schedulePlanForm.value.endAt.split(' ').length == 1) {
+            if (schedulePlanForm.value.scheduleType != "间接") {
+                const range = scheduleColumns.find(column => column.label == schedulePlanForm.value.scheduleType || column.id == schedulePlanForm.value.scheduleType).value.split('-');
+                schedulePlanForm.value.startAt = scheduleForm.value.date + " " + range[0] + ":00";
+                nextDate.setDate(nextDate.getDate() + (schedulePlanForm.value.scheduleType == 3 ? 1 : 0));
+                schedulePlanForm.value.endAt = formatDate(nextDate) + " " + range[1] + ":00";
+            } else if (schedulePlanForm.value.scheduleType == "间接" && schedulePlanForm.value.startAt != "" && schedulePlanForm.value.endAt != "") {
+                schedulePlanForm.value.startAt = scheduleForm.value.date + " " + schedulePlanForm.value.startAt + ":00";
+                nextDate.setDate(nextDate.getDate() + (nextDay.value ? 1 : 0));
+                schedulePlanForm.value.endAt = formatDate(nextDate) + " " + schedulePlanForm.value.endAt + ":00";
+            }
+        }
+        console.log(schedulePlanForm.value);
         schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
             ElMessage.success("提交成功");
             drawerVisible.value = false;
-            getScheduleList();
+            resetSchedulePlanForm()
+            getSchedulePlanList(schedulePlanForm.value.schedule.id);
         }).catch((error) => {
             console.log(error);
             ElMessage.error("提交失败");
@@ -545,7 +618,7 @@ const getScheduleList = () => {
     scheduleLoading.value = true;
     scheduleAPI.list(scheduleForm.value).then((res) => {
         res.data.page.list.forEach((item) => {
-            item.date = formatDate(item.date, 1)
+            item.date = formatDate(item.date)
         });
         store.setSchedule(res.data.page.list);
         total.value = res.data.page.count;
@@ -558,38 +631,40 @@ const getSchedulePlanList = (scheduleID) => {
     schedulePlanLoading.value = true;
     schedulePlanForm.value.schedule.id = scheduleID;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
-        const taskType = store.dict.find(item => item.label == "任务类型").dictChildren
-        const scheduleType = store.dict.find(item => item.label == "班次类型").dictChildren
+        console.log(res);
         res.data.page.list.forEach((item) => {
-            item.taskType = taskType.find(item1 => item1.value == item.taskType).label;
-            item.scheduleType = scheduleType.find(item1 => item1.value == item.scheduleType).label;
+            item.taskType = taskType.value.find(item1 => item1.value == item.taskType).label;
+            item.scheduleType = scheduleType.value.find(item1 => item1.value == item.scheduleType).label;
         });
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
         subTableData.value.forEach(element => {
-            element.startAt = formatDate(element.startAt, 1, 1);
-            element.endAt = formatDate(element.endAt, 1, 1);
+            element.startAt = formatDate(element.startAt, 1);
+            element.endAt = formatDate(element.endAt, 1);
         });
         schedulePlanLoading.value = false;
     });
 }
 
-const formatDate = (date, num = 1, type = null) => {
-    // date = new Date(date);
-    date = new Date(new Date(date).getTime() + 8 * 60 * 60 * 1000);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + num).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    let time = ""
-    if (type == 0) {
-        time = " 00:00:00"
-    } else if (type == 1) {
-        time = " " + hours + ":" + minutes + ":00"
-    }
-    return `${year}-${month}-${day}${time}`;
-};
+// const formatDate = (date, type) => {
+//     date = new Date(date);
+//     const year = date.getFullYear();
+//     const month = String(date.getMonth() + 1).padStart(2, '0');
+//     const day = String(date.getDate()).padStart(2, '0');
+//     const hours = String(date.getHours()).padStart(2, '0');
+//     const minutes = String(date.getMinutes()).padStart(2, '0');
+//     let time = ""
+//     if (type == 0) {
+//         time = " 00:00:00"
+//     } else if (type == 1) {
+//         time = " " + hours + ":" + minutes + ":00"
+//     }
+//     return `${year}-${month}-${day}${time}`;
+// };
+
+const exportSchedule = () => {
+
+}
 
 const refreshScheduleTable = () => {
     scheduleForm.value.page.pageNo = 1;
@@ -600,7 +675,7 @@ const refreshScheduleTable = () => {
 const refreshSchedulePlanTable = () => {
     schedulePlanForm.value.page.pageNo = 1;
     pageNo.value = 1;
-    getSchedulePlanList();
+    getSchedulePlanList(scheduleForm.value.id);
 };
 
 const handleSizeChange = (value) => {
