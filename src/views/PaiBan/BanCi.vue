@@ -328,12 +328,12 @@ const store = useStore();
 
 import scheduleAPI from "@/api/Schedule";
 import schedulePlanAPI from "@/api/SchedulePlan";
+import exportAPI from "@/api/Export";
 import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
 import UserSelect from "@/components/UserSelect.vue";
 import { formatDate } from "@/utils/Format";
-import { id } from "element-plus/es/locales.mjs";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -663,7 +663,10 @@ const getSchedulePlanList = (scheduleID) => {
 // };
 
 const exportSchedule = () => {
-
+    exportAPI.exportSchedule().then((res) => {
+        console.log(res);
+        ElMessage.success("导出成功");
+    })
 }
 
 const refreshScheduleTable = () => {
