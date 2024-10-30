@@ -9,7 +9,6 @@
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
                 <div>
-                    <el-button type="success" @click="exportSchedule">导出</el-button>
                     <el-button type="default" @click="refreshScheduleTable">刷新</el-button>
                 </div>
             </el-row>
@@ -36,13 +35,14 @@
                     width="150" />
                 <el-table-column prop="nightOther" label="夜班其它人员" show-overflow-tooltip sortable="custom" width="150" />
 
-                <el-table-column fixed="right" label="操作" width="120">
+                <el-table-column fixed="right" label="操作" width="150">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="editSchedule(scope.row)">
                             {{ editButtonText }}
                         </el-button>
                         <el-button link type="primary" size="small" @click="deleteSchedule(scope.row)"
                             v-if="!roleLevelBoolean">删除</el-button>
+                        <el-button link type="primary" size="small" @click="exportSchedule(scope.row)">导出</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -55,17 +55,17 @@
     </el-container>
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="60%" draggable overflow :close-on-click-modal="false"
         v-if="dialogVisible">
-        <el-form :model="scheduleForm">
+        <el-form :model="scheduleForm" ref="scheduleFormRef">
             <el-row :gutter="15">
                 <el-col :span="6">
-                    <el-form-item label="排班部门" prop="department.id">
+                    <el-form-item label="排班部门" prop="department.id" required>
                         <DepartmentSelect ref="departmentSelectRef" @model="setModel" :id="scheduleForm.department.id"
                             :disabled="roleLevelBoolean" />
                     </el-form-item>
                 </el-col>
                 <el-col :span="6">
                     <el-form-item label="日期" prop="date">
-                        <el-date-picker v-model="scheduleForm.date" placeholder="请选择日期"></el-date-picker>
+                        <el-date-picker v-model="scheduleForm.date" placeholder="请选择日期" required></el-date-picker>
                     </el-form-item>
                 </el-col>
                 <el-col :span="4">
@@ -358,6 +358,14 @@ const deleteButtonDisabled = ref(true);
 
 const IDs = ref("");
 
+const scheduleFormRef = ref(null);
+
+const rules = {
+    name: [
+        { required: true, message: "请输入角色名称", trigger: "blur" },
+    ],
+}
+
 const setModel = (data) => {
     console.log("子组件传递的数据：", data);
     if (data.type == "department") {
@@ -488,6 +496,15 @@ const addSchedule = () => {
     schedulePlanLoading.value = false
     dialogVisible.value = true;
     dialogTitle.value = "新建班次";
+}
+
+const exportSchedule = (row) => {
+    scheduleForm.value = row;
+    scheduleForm.value.date = formatDate(scheduleForm.value.date, 0)
+    exportAPI.exportSchedule(row).then((res) => {
+        console.log(res);
+        ElMessage.success("导出成功");
+    })
 }
 
 const editSchedule = (row) => {
@@ -662,12 +679,6 @@ const getSchedulePlanList = (scheduleID) => {
 //     return `${year}-${month}-${day}${time}`;
 // };
 
-const exportSchedule = () => {
-    exportAPI.exportSchedule().then((res) => {
-        console.log(res);
-        ElMessage.success("导出成功");
-    })
-}
 
 const refreshScheduleTable = () => {
     scheduleForm.value.page.pageNo = 1;

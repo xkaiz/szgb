@@ -48,13 +48,13 @@ const traverseRoutes = (routes) => {
         if (!route.hasOwnProperty("children")) {
             menuItem.push({
                 name: route.meta.title,
-                path: route.name,
+                path: route.path,
                 child: []
             })
         } else if (route.hasOwnProperty("children")) {
             menuItem.push({
                 name: route.meta.title,
-                path: route.name,
+                path: route.path,
                 child: traverseRoutes(route.children)
             })
         }

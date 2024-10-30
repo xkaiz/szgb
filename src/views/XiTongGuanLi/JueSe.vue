@@ -23,7 +23,8 @@
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column prop="name" label="角色名称" show-overflow-tooltip sortable="custom" />
+                <el-table-column prop="name" label="角色名称" show-overflow-tooltip sortable="custom" width="150" />
+                <el-table-column prop="" label="菜单权限" show-overflow-tooltip sortable="custom" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="editRole(scope.row)">
@@ -43,9 +44,12 @@
     </el-container>
     <el-dialog v-model="roleDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="roleDialogVisible">
         <el-form :model="roleForm" :rules="rules" ref="formRef">
-            <el-form-item label="角色名称" prop="name">
-                <el-input v-model="roleForm.name" placeholder="请填写角色名称" :disabled="roleLevelBoolean"
-                    required></el-input>
+            <el-form-item label="角色名称" prop="name" required>
+                <el-input v-model="roleForm.name" placeholder="请填写角色名称" :disabled="roleLevelBoolean"></el-input>
+            </el-form-item>
+            <el-form-item label="菜单权限" prop="" required>
+                <el-cascader :options="routerOptions" :props="props" collapse-tags collapse-tags-tooltip clearable
+                    :disabled="roleLevelBoolean" style="width: 100%;" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -66,6 +70,7 @@ import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
+import { useRouter } from "vue-router";
 
 import roleAPI from "@/api/Role";
 import { ElMessage, ElMessageBox } from "element-plus";
@@ -85,6 +90,9 @@ const submitButtonText = ref("提交");
 const deleteRoleButtonDisabled = ref(true);
 
 const roleIDs = ref("");
+
+const routerOptions = ref([]);
+const props = { multiple: true };
 
 const editButtonText = computed(() => {
     if (store.roleLevel == 1) {
@@ -132,6 +140,19 @@ onMounted(() => {
         window.location.href = "/login?path=JueSe";
         return
     }
+    const routes = useRouter().getRoutes()
+    routes.forEach(element => {
+        if (element.children.length > 0 && element.meta.title != "首页") {
+            routerOptions.value.push({
+                value: element.path,
+                label: element.meta.title,
+                children: element.children.map(child => {
+                    return { value: child.path, label: child.meta == undefined ? "" : child.meta.title }
+                })
+            });
+        }
+    });
+    console.log(routerOptions.value);
     getList()
 });
 

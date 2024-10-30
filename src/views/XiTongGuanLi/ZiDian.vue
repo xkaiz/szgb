@@ -50,17 +50,16 @@
         </el-main>
     </el-container>
     <el-dialog v-model="dictChildrenDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="dictChildrenForm">
-
+        <el-form :model="dictChildrenForm" ref="dictChildrenFormRef" :rules="dictChildrenRules">
             <el-row :gutter="15">
                 <el-col :span="12">
-                    <el-form-item label="键" prop="label">
+                    <el-form-item label="键" prop="label" required>
                         <el-input v-model="dictChildrenForm.label" placeholder="请填写键"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                    <el-form-item label="值" prop="value">
+                    <el-form-item label="值" prop="value" required>
                         <el-input v-model="dictChildrenForm.value" placeholder="请填写值"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
@@ -117,8 +116,8 @@
         </el-drawer>
     </div>
     <el-dialog v-model="dictDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
-        <el-form :model="dictForm">
-            <el-form-item label="字典数据名称" prop="name">
+        <el-form :model="dictForm" ref="dictFormRef" :rules="dictRules">
+            <el-form-item label="字典数据名称" prop="name" required>
                 <el-input v-model="dictForm.name" placeholder="请填写字典数据名称" :disabled="roleLevelBoolean"></el-input>
             </el-form-item>
         </el-form>
@@ -190,6 +189,25 @@ const dictChildrenIDs = ref("");
 const pageNo = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
+
+//字典和字典数据表单规则相关
+const dictChildrenFormRef = ref(null);
+const dictFormRef = ref(null);
+
+const dictChildrenRules = ref({
+    label: [
+        { required: true, message: "键不能为空", trigger: "blur" },
+    ],
+    value: [
+        { required: true, message: "值不能为空", trigger: "blur" },
+    ]
+});
+
+const dictRules = ref({
+    name: [
+        { required: true, message: "字典数据名称不能为空", trigger: "blur" },
+    ],
+});
 
 
 //根据角色等级判断是否显示相关按钮
@@ -396,28 +414,36 @@ const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
     if (type == "dict") {
-        dictAPI.save(dictForm.value).then((res) => {
-            if (dialogTitle.value == "编辑字典") {
-                ElMessage.success("更新字典成功");
-            } else if (dialogTitle.value == "新建字典") {
-                ElMessage.success("新建字典成功");
+        dictFormRef.value.validate((valid) => {
+            if (valid) {
+                dictAPI.save(dictForm.value).then((res) => {
+                    if (dialogTitle.value == "编辑字典") {
+                        ElMessage.success("更新字典成功");
+                    } else if (dialogTitle.value == "新建字典") {
+                        ElMessage.success("新建字典成功");
+                    }
+                    dictDialogVisible.value = false;
+                    getDictList();
+                }).catch((error) => {
+                    console.log(error);
+                })
             }
-            dictDialogVisible.value = false;
-            getDictList();
-        }).catch((error) => {
-            console.log(error);
         })
     } else if (type == "dictChildren") {
-        dictChildrenAPI.save(dictChildrenForm.value).then((res) => {
-            if (dialogTitle.value == "编辑字典数据") {
-                ElMessage.success("更新字典数据成功");
-            } else if (dialogTitle.value == "新建字典数据") {
-                ElMessage.success("新建字典数据成功");
+        dictChildrenFormRef.value.validate((valid) => {
+            if (valid) {
+                dictChildrenAPI.save(dictChildrenForm.value).then((res) => {
+                    if (dialogTitle.value == "编辑字典数据") {
+                        ElMessage.success("更新字典数据成功");
+                    } else if (dialogTitle.value == "新建字典数据") {
+                        ElMessage.success("新建字典数据成功");
+                    }
+                    dictChildrenDialogVisible.value = false;
+                    getDictChildrenList(dictChildrenForm.value.dict.id);
+                }).catch((error) => {
+                    console.log(error);
+                })
             }
-            dictChildrenDialogVisible.value = false;
-            getDictChildrenList(dictChildrenForm.value.dict.id);
-        }).catch((error) => {
-            console.log(error);
         })
     }
     submitButtonLoading.value = false;
