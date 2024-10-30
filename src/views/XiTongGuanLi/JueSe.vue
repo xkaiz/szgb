@@ -152,7 +152,6 @@ onMounted(() => {
             });
         }
     });
-    console.log(routerOptions.value);
     getList()
 });
 

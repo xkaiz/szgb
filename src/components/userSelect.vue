@@ -10,7 +10,7 @@
 import { onMounted, ref } from 'vue'
 import userAPI from '@/api/user'
 
-const props = defineProps(["id", "multiple", "collapseTags", "collapseTagsTooltip"])
+const props = defineProps(["id", "userType"])
 const emit = defineEmits(["model"]);
 
 const userSelect = ref({
@@ -46,7 +46,6 @@ const getList = () => {
     loading.value = true;
     userAPI.list(user.value).then((res) => {
         options.value = res.data.page.list;
-
         loading.value = false;
     }).catch((error) => {
         console.log(error);
@@ -54,7 +53,8 @@ const getList = () => {
 };
 
 const handelChange = (data) => {
-    emit("model", { type: "user", value: data });
+
+    emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1 });
 };
 
 const clear = () => {

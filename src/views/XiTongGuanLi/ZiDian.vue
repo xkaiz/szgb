@@ -145,6 +145,7 @@ import dictAPI from "@/api/Dict";
 import dictChildrenAPI from "@/api/DictChildren";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { getDicts, isNeedUpdate } from "@/utils/Dict";
 
 const treeRef = ref(null);
 const treeData = ref([]);
@@ -268,12 +269,23 @@ onMounted(() => {
         window.location.href = "/login?path=ZiDian";
         return
     }
-    dictAPI.list(dict.value).then((res) => {
-        store.setDict(buildTree(res.data.dictTree));
+    // dictAPI.list(dict.value).then((res) => {
+    //     store.setDict(buildTree(res.data.dictTree));
+    //     treeData.value = store.dict;
+    //     dictLoading.value = false;
+    //     dictChildrenLoading.value = false
+    // })
+    if (store.dict == undefined || isNeedUpdate()) {
+        getDicts().then(() => {
+            treeData.value = store.dict;
+            dictLoading.value = false;
+            dictChildrenLoading.value = false
+        })
+    } else {
         treeData.value = store.dict;
         dictLoading.value = false;
         dictChildrenLoading.value = false
-    })
+    }
 });
 
 //处理字典数据树节点点击

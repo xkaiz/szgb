@@ -30,8 +30,7 @@ const store = useStore();
 import userAPI from "@/api/User";
 import userRoleAPI from "@/api/UserRole";
 import { permission } from "@/utils/Permission";
-import { ElMessage } from "element-plus";
-
+import { getDicts } from "@/utils/Dict";
 const loginForm = ref({
     username: "admin",
     password: "123456",
@@ -42,10 +41,6 @@ const userRole = ref({
     user: {
         id: ""
     }
-});
-
-const role = ref({
-    id: "",
 });
 
 const loginFormRef = ref(null);
@@ -76,7 +71,7 @@ const autoLogin = () => {
 const login = () => {
     userAPI.login(loginForm.value).then((res) => {
         cookies.set("token", res.data.sysUser.token);
-        getUserRole(res.data.sysUser);
+        initData(res.data.sysUser);
     }).catch((error) => {
         console.log(error);
         loginButtonLoading.value = false;
@@ -95,17 +90,17 @@ const handleLogin = () => {
     });
 };
 
-const getUserRole = (user) => {
+const initData = (user) => {
     userRole.value.user.id = user.id;
     Promise.all([
         userRoleAPI.list(userRole.value).then((res) => {
-            console.log(res);
             user.role = res.data.page.list.map((item) => {
                 return { id: item.role.id, name: item.role.name };
             });
             store.setUser(user);
             permission()
         }),
+        getDicts()
     ]).then(() => {
         router.push("/" + path.value);
     }).catch((error) => {

@@ -90,7 +90,7 @@
                 </el-col>
                 <el-col :span="6">
                     <el-form-item label="领班" prop="dayGaffer">
-                        <el-select>
+                        <el-select v-model="scheduleForm.dayGaffer" :disabled="dayOptions.length == 0">
                             <el-option v-for="item in dayOptions" :key="item.value" :label="item.label"
                                 :value="item.value" />
                         </el-select>
@@ -281,15 +281,15 @@
                 <el-row :gutter="15">
                     <el-col :span="12">
                         <el-form-item label="负责人" prop="">
-                            <UserSelect @model="setModel"></UserSelect>
+                            <UserSelect @model="setModel" user-type="leader"></UserSelect>
                         </el-form-item>
                     </el-col>
                 </el-row>
                 <el-row :gutter="15">
                     <el-col :span="24">
                         <el-form-item label="参与人员" prop="">
-                            <UserSelect @model="setModel" multiple collapse-tags collapse-tags-tooltip
-                                :max-collapse-tags="4" style="width: 100%;">
+                            <UserSelect @model="setModel" multiple :collapse-tags="true" :collapse-tags-tooltip="true"
+                                :max-collapse-tags="4" user-type="member" style="width: 100%;">
                             </UserSelect>
                         </el-form-item>
                     </el-col>
@@ -334,6 +334,7 @@ import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
 import UserSelect from "@/components/UserSelect.vue";
 import { formatDate } from "@/utils/Format";
+import { getDicts, isNeedUpdate } from "@/utils/Dict";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -360,16 +361,34 @@ const IDs = ref("");
 
 const scheduleFormRef = ref(null);
 
-const rules = {
+const scheduleFormRules = {
     name: [
         { required: true, message: "请输入角色名称", trigger: "blur" },
     ],
 }
 
+const schedulePlanMember = ref([])
+
 const setModel = (data) => {
     console.log("子组件传递的数据：", data);
     if (data.type == "department") {
         scheduleForm.value[data.type].id = data.value;
+    } else if (data.type == "user") {
+        if (Array.isArray(data.value)) {
+            schedulePlanMember.value = data.value.map(item => {
+                return {
+                    schedulePlanId: schedulePlanForm.value.id,
+                    type: data.userType,
+                    userId: item
+                }
+            });
+        } else {
+            schedulePlanForm.value.schedulePeopleList.push({
+                schedulePlanId: schedulePlanForm.value.id,
+                type: data.userType,
+                userId: data.value
+            });
+        }
     } else {
         schedulePlanForm.value[data.type] = data.value;
     }
@@ -571,14 +590,17 @@ const deleteSchedulePlan = (row) => {
 }
 
 const initDictSelectOptions = () => {
-    taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
-    scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
-}
+    if (store.dict == undefined || isNeedUpdate()) {
+        getDicts().then(() => {
+            taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
+            scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
+        });
+    } else {
+        taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
+        scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
+    }
 
-const isNumeric = (value) => {
-    const num = Number(value);
-    return !isNaN(num) && isFinite(num);
-};
+}
 
 const submit = (type) => {
     submitButtonLoading.value = true;
@@ -595,12 +617,6 @@ const submit = (type) => {
             ElMessage.error("提交失败");
         });
     } else if (type == 2) {
-        // if (!isNumeric(schedulePlanForm.value.taskType)) {
-        //     schedulePlanForm.value.taskType = taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value
-        // }
-        // if (!isNumeric(schedulePlanForm.value.scheduleType)) {
-        //     schedulePlanForm.value.scheduleType = scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value
-        // }
         schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
         schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
         const nextDate = new Date(scheduleForm.value.date);
@@ -616,16 +632,17 @@ const submit = (type) => {
                 schedulePlanForm.value.endAt = formatDate(nextDate) + " " + schedulePlanForm.value.endAt + ":00";
             }
         }
+        schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
         console.log(schedulePlanForm.value);
-        schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
-            ElMessage.success("提交成功");
-            drawerVisible.value = false;
-            resetSchedulePlanForm()
-            getSchedulePlanList(schedulePlanForm.value.schedule.id);
-        }).catch((error) => {
-            console.log(error);
-            ElMessage.error("提交失败");
-        });
+        // schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
+        //     ElMessage.success("提交成功");
+        //     drawerVisible.value = false;
+        //     getSchedulePlanList(schedulePlanForm.value.schedule.id);
+        //     console.log(scheduleForm.value);
+        // }).catch((error) => {
+        //     console.log(error);
+        //     ElMessage.error("提交失败");
+        // });
     }
 
     submitButtonLoading.value = false;
@@ -646,9 +663,9 @@ const getScheduleList = () => {
 
 const getSchedulePlanList = (scheduleID) => {
     schedulePlanLoading.value = true;
+    resetSchedulePlanForm()
     schedulePlanForm.value.schedule.id = scheduleID;
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
-        console.log(res);
         res.data.page.list.forEach((item) => {
             item.taskType = taskType.value.find(item1 => item1.value == item.taskType).label;
             item.scheduleType = scheduleType.value.find(item1 => item1.value == item.scheduleType).label;
