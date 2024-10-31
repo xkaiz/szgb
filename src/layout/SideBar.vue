@@ -42,45 +42,34 @@ const url = window.location.href
 const defaultActive = ref(url.split("/")[3] || "home")
 
 const menuItems = ref([])
-const traverseRoutes = (routes) => {
-    let menuItem = []
-    routes.forEach((route) => {
-        if (!route.hasOwnProperty("children")) {
-            menuItem.push({
-                name: route.meta.title,
-                path: route.path,
-                child: []
-            })
-        } else if (route.hasOwnProperty("children")) {
-            menuItem.push({
-                name: route.meta.title,
-                path: route.path,
-                child: traverseRoutes(route.children)
-            })
+const traverseRoutes = (children) => {
+    return children.map(child => ({
+        name: child.meta.title,
+        path: child.path,
+        child: child.children ? traverseRoutes(child.children) : [],
+    }));
+};
+
+const createMenuItems = (routes) => {
+    const menuItems = [];
+    routes.forEach(route => {
+        if (route.path === "/" || route.path === "/login") {
+            return;
         }
-    })
-    return menuItem
-}
+        const menuItem = {
+            name: route.meta.title,
+            path: route.path,
+            child: route.children && route.path != "/home" ? traverseRoutes(route.children) : [],
+        };
+
+        menuItems.push(menuItem);
+    });
+    return menuItems;
+};
 
 onMounted(() => {
-    router.options.routes.forEach((route) => {
-        if (route.path != "/" && route.path != "/login" && route.path != "/test") {
-            if (route.children.length == 1 && !route.children[0].hasOwnProperty("name")) {
-                menuItems.value.push({
-                    name: route.meta.title,
-                    path: route.name,
-                    child: []
-                })
-            } else {
-                menuItems.value.push({
-                    name: route.meta.title,
-                    path: route.name,
-                    child: traverseRoutes(route.children)
-                })
-            }
-        }
-
-    })
+    menuItems.value = createMenuItems(router.options.routes);
+    console.log(menuItems.value);
 })
 </script>
 

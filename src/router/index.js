@@ -28,24 +28,23 @@ const routes = [
 	{
 		path: "/PaiBan",
 		component: Layout,
-		redirect: "/PaiBan",
 		name: "PaiBan",
 		meta: { title: "排班" },
 		children: [
 			{
-				path: "/PaiBan/JiHua",
+				path: "/JiHua",
 				component: () => import("@/views/PaiBan/JiHua.vue"),
 				name: "JiHua",
 				meta: { title: "计划管理" },
 			},
 			{
-				path: "/PaiBan/BanCi",
+				path: "/BanCi",
 				component: () => import("@/views/PaiBan/BanCi.vue"),
 				name: "PaiBan",
 				meta: { title: "班次管理" },
 			},
 			{
-				path: "/PaiBan/MuBan",
+				path: "/MuBan",
 				component: () => import("@/views/PaiBan/MuBan.vue"),
 				name: "MuBan",
 				meta: { title: "模板管理" },
@@ -55,43 +54,42 @@ const routes = [
 	{
 		path: "/XiTongGuanLi",
 		component: Layout,
-		redirect: "/XiTongGuanLi",
 		name: "XiTongGuanLi",
 		meta: { title: "系统管理" },
 		children: [
 			{
-				path: "/XiTongGuanLi/ZiDian",
+				path: "/ZiDian",
 				component: () => import("@/views/XiTongGuanLi/ZiDian.vue"),
 				name: "ZiDian",
 				meta: { title: "数据字典" },
 			},
 			{
-				path: "/XiTongGuanLi/RenYuan",
+				path: "/RenYuan",
 				component: () => import("@/views/XiTongGuanLi/RenYuan.vue"),
 				name: "RenYuan",
 				meta: { title: "人员管理" },
 			},
 
 			{
-				path: "/XiTongGuanLi/JueSe",
+				path: "/JueSe",
 				component: () => import("@/views/XiTongGuanLi/JueSe.vue"),
 				name: "JueSe",
 				meta: { title: "角色管理" },
 			},
 			{
-				path: "/XiTongGuanLi/ZhengShu",
+				path: "/ZhengShu",
 				component: () => import("@/views/XiTongGuanLi/ZhengShu.vue"),
 				name: "ZhengShu",
 				meta: { title: "证书管理" },
 			},
 			{
-				path: "/XiTongGuanLi/ZiZhi",
+				path: "/ZiZhi",
 				component: () => import("@/views/XiTongGuanLi/ZiZhi.vue"),
 				name: "ZiZhi",
 				meta: { title: "资质管理" },
 			},
 			{
-				path: "/XiTongGuanLi/QuanXian",
+				path: "/QuanXian",
 				component: () => import("@/views/XiTongGuanLi/QuanXian.vue"),
 				name: "QuanXian",
 				meta: { title: "权限管理" },

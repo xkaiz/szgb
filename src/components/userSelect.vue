@@ -10,7 +10,7 @@
 import { onMounted, ref } from 'vue'
 import userAPI from '@/api/user'
 
-const props = defineProps(["id", "userType"])
+const props = defineProps(["id", "userType", "multiple", "collapseTags", "collapseTagsTooltip"])
 const emit = defineEmits(["model"]);
 
 const userSelect = ref({

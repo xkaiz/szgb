@@ -288,8 +288,9 @@
                 <el-row :gutter="15">
                     <el-col :span="24">
                         <el-form-item label="参与人员" prop="">
-                            <UserSelect @model="setModel" multiple :collapse-tags="true" :collapse-tags-tooltip="true"
-                                :max-collapse-tags="4" user-type="member" style="width: 100%;">
+                            <UserSelect @model="setModel" :multiple="true" :collapse-tags="true"
+                                :collapse-tags-tooltip="true" :max-collapse-tags="4" user-type="member"
+                                style="width: 100%;">
                             </UserSelect>
                         </el-form-item>
                     </el-col>
@@ -634,15 +635,15 @@ const submit = (type) => {
         }
         schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
         console.log(schedulePlanForm.value);
-        // schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
-        //     ElMessage.success("提交成功");
-        //     drawerVisible.value = false;
-        //     getSchedulePlanList(schedulePlanForm.value.schedule.id);
-        //     console.log(scheduleForm.value);
-        // }).catch((error) => {
-        //     console.log(error);
-        //     ElMessage.error("提交失败");
-        // });
+        schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
+            ElMessage.success("提交成功");
+            drawerVisible.value = false;
+            getSchedulePlanList(schedulePlanForm.value.schedule.id);
+            console.log(scheduleForm.value);
+        }).catch((error) => {
+            console.log(error);
+            ElMessage.error("提交失败");
+        });
     }
 
     submitButtonLoading.value = false;
