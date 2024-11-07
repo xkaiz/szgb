@@ -49,7 +49,8 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dictChildrenDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
+    <el-dialog v-model="dictChildrenDialogVisible" :title="dialogTitle" width="30%" draggable overflow
+        :close-on-click-modal="false">
         <el-form :model="dictChildrenForm" ref="dictChildrenFormRef" :rules="dictChildrenRules">
             <el-row :gutter="15">
                 <el-col :span="12">
@@ -78,7 +79,7 @@
     </el-dialog>
 
     <div class="drawer">
-        <el-drawer v-model="drawerVisible" direction="ltr" size="30%">
+        <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false">
             <template #header>
                 <h3>字典数据管理</h3>
             </template>
@@ -115,7 +116,8 @@
             </template>
         </el-drawer>
     </div>
-    <el-dialog v-model="dictDialogVisible" :title="dialogTitle" width="30%" draggable overflow>
+    <el-dialog v-model="dictDialogVisible" :title="dialogTitle" width="30%" draggable overflow
+        :close-on-click-modal="false">
         <el-form :model="dictForm" ref="dictFormRef" :rules="dictRules">
             <el-form-item label="字典数据名称" prop="name" required>
                 <el-input v-model="dictForm.name" placeholder="请填写字典数据名称" :disabled="roleLevelBoolean"></el-input>

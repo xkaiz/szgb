@@ -63,7 +63,8 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="userDialogVisible">
+    <el-dialog v-model="userDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="userDialogVisible"
+        :close-on-click-modal="false">
         <el-form :model="userForm" :rules="userRules" ref="userFormRef">
             <el-row :gutter="15">
                 <el-col :span="12">
@@ -107,7 +108,7 @@
         </template>
     </el-dialog>
     <div class="drawer">
-        <el-drawer v-model="drawerVisible" direction="ltr" size="30%">
+        <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false">
             <template #header>
                 <h3>部门管理</h3>
             </template>
@@ -145,7 +146,7 @@
         </el-drawer>
     </div>
     <el-dialog v-model="departmentDialogVisible" :title="dialogTitle" width="30%" draggable overflow
-        v-if="departmentDialogVisible">
+        v-if="departmentDialogVisible" :close-on-click-modal="false">
         <el-form :model="departmentForm" :rules="departmentRules" ref="departmentFormRef">
             <el-row :gutter="15">
                 <el-col :span="12">

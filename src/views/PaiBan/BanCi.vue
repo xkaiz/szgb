@@ -53,7 +53,7 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="60%" draggable overflow :close-on-click-modal="false"
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="70%" draggable overflow :close-on-click-modal="false"
         v-if="dialogVisible">
         <el-form :model="scheduleForm" ref="scheduleFormRef">
             <el-row :gutter="15">
@@ -194,8 +194,8 @@
                 @selection-change="handleSelectionChange" @sort-change="handleSortChange">
                 <el-table-column type="selection" header-align="center" align="center" width="50" />
                 <el-table-column prop="id" label="id" width="80" v-if="false" />
-                <el-table-column prop="" label="负责人" show-overflow-tooltip width="120" fixed="left" />
-                <el-table-column prop="" label="参与人员" show-overflow-tooltip width="300" fixed="left" />
+                <el-table-column prop="leaderName" label="负责人" show-overflow-tooltip width="120" fixed="left" />
+                <el-table-column prop="memberNames" label="参与人员" show-overflow-tooltip width="300" fixed="left" />
                 <el-table-column prop="taskType" label="任务类型" show-overflow-tooltip width="100" />
                 <el-table-column prop="taskName" label="任务名称" show-overflow-tooltip width="120" />
                 <el-table-column prop="location" label="任务地点" show-overflow-tooltip width="120" />
@@ -241,6 +241,20 @@
                         <el-form-item label="任务名称" prop="taskName">
                             <el-select v-model="schedulePlanForm.taskName" filterable allow-create default-first-option
                                 :disabled="roleLevelBoolean">
+                                <template #footer>
+                                    <el-button v-if="!isTemplateAdding" text bg size="small"
+                                        @click="onAddTemplateOption">
+                                        添加模板
+                                    </el-button>
+                                    <template v-else>
+                                        <el-input v-model="templateOption" class="template-input" placeholder="输入模板内容"
+                                            type="textarea" size="small" autosize />
+                                        <el-button type="primary" size="small" @click="onTemplateConfirm">
+                                            添加
+                                        </el-button>
+                                        <el-button size="small" @click="isTemplateAdding = false">取消</el-button>
+                                    </template>
+                                </template>
                             </el-select>
                         </el-form-item>
                     </el-col>
@@ -280,17 +294,18 @@
                 </el-row>
                 <el-row :gutter="15">
                     <el-col :span="12">
-                        <el-form-item label="负责人" prop="">
-                            <UserSelect @model="setModel" user-type="leader"></UserSelect>
+                        <el-form-item label="负责人" prop="leader">
+                            <UserSelect @model="setModel" user-type="leader" :form="schedulePlanForm">
+                            </UserSelect>
                         </el-form-item>
                     </el-col>
                 </el-row>
                 <el-row :gutter="15">
                     <el-col :span="24">
-                        <el-form-item label="参与人员" prop="">
+                        <el-form-item label="参与人员" prop="member">
                             <UserSelect @model="setModel" :multiple="true" :collapse-tags="true"
                                 :collapse-tags-tooltip="true" :max-collapse-tags="4" user-type="member"
-                                style="width: 100%;">
+                                :form="schedulePlanForm" style="width: 100%;">
                             </UserSelect>
                         </el-form-item>
                     </el-col>
@@ -362,13 +377,22 @@ const IDs = ref("");
 
 const scheduleFormRef = ref(null);
 
+const isTemplateAdding = ref(false);
+const templateOption = ref("");
+const onAddTemplateOption = (option) => {
+    isTemplateAdding.value = true;
+}
+
+const onTemplateConfirm = () => {
+
+}
+
 const scheduleFormRules = {
     name: [
         { required: true, message: "请输入角色名称", trigger: "blur" },
     ],
 }
 
-const schedulePlanMember = ref([])
 
 const setModel = (data) => {
     console.log("子组件传递的数据：", data);
@@ -376,24 +400,37 @@ const setModel = (data) => {
         scheduleForm.value[data.type].id = data.value;
     } else if (data.type == "user") {
         if (Array.isArray(data.value)) {
-            schedulePlanMember.value = data.value.map(item => {
-                return {
-                    schedulePlanId: schedulePlanForm.value.id,
+            data.value.foreach(element => {
+                schedulePlanForm.value.schedulePeopleList.push({
+                    schedulePlan: {
+                        id: schedulePlanForm.value.id
+                    },
                     type: data.userType,
-                    userId: item
-                }
+                    user: {
+                        id: element
+                    },
+                    id: data.id,
+                    version: data.version
+                });
             });
         } else {
             schedulePlanForm.value.schedulePeopleList.push({
-                schedulePlanId: schedulePlanForm.value.id,
+                schedulePlan: {
+                    id: schedulePlanForm.value.id
+                },
                 type: data.userType,
-                userId: data.value
+                user: {
+                    id: data.value
+                },
+                id: data.id,
+                version: data.version
             });
         }
     } else {
         schedulePlanForm.value[data.type] = data.value;
     }
 }
+
 
 
 const editButtonText = computed(() => {
@@ -463,6 +500,7 @@ const initialSchedulePlanForm = {
     schedule: {
         id: "",
     },
+    schedulePeopleList: [],
     taskType: "",
     taskName: "",
     location: "",
@@ -481,6 +519,7 @@ const initialSchedulePlanForm = {
 
 const scheduleForm = ref({ ...initialScheduleForm });
 const schedulePlanForm = ref({ ...initialSchedulePlanForm });
+
 
 const nextDay = ref(false)
 
@@ -509,15 +548,6 @@ const resetSchedulePlanForm = () => {
 }
 
 
-const addSchedule = () => {
-    resetScheduleForm()
-    subTableData.value = []
-    scheduleForm.value.department.id = store.user.department.id
-    schedulePlanLoading.value = false
-    dialogVisible.value = true;
-    dialogTitle.value = "新建班次";
-}
-
 const exportSchedule = (row) => {
     scheduleForm.value = row;
     scheduleForm.value.date = formatDate(scheduleForm.value.date, 0)
@@ -525,6 +555,15 @@ const exportSchedule = (row) => {
         console.log(res);
         ElMessage.success("导出成功");
     })
+}
+
+const addSchedule = () => {
+    resetScheduleForm()
+    subTableData.value = []
+    scheduleForm.value.department.id = store.user.department.id
+    schedulePlanLoading.value = false
+    dialogVisible.value = true;
+    dialogTitle.value = "新建班次";
 }
 
 const editSchedule = (row) => {
@@ -564,7 +603,9 @@ const addSchedulePlan = () => {
 }
 
 const editSchedulePlan = (row) => {
+    row.schedulePeopleList = [];
     schedulePlanForm.value = JSON.parse(JSON.stringify(row));
+    console.log(schedulePlanForm.value);
     drawerVisible.value = true;
 }
 
@@ -634,12 +675,10 @@ const submit = (type) => {
             }
         }
         schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
-        console.log(schedulePlanForm.value);
         schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
             ElMessage.success("提交成功");
             drawerVisible.value = false;
             getSchedulePlanList(schedulePlanForm.value.schedule.id);
-            console.log(scheduleForm.value);
         }).catch((error) => {
             console.log(error);
             ElMessage.error("提交失败");
@@ -674,9 +713,15 @@ const getSchedulePlanList = (scheduleID) => {
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
         subTableData.value.forEach(element => {
+            element.leader = element.schedulePeopleList.find(item => item.type == "0");
+            element.leaderName = element.schedulePeopleList.find(item => item.type == "0").user.name;
+            element.leaderId = element.schedulePeopleList.find(item => item.type == "0").user.id;
+            element.member = element.schedulePeopleList.filter(item => item.type == "1");
+            element.memberNames = element.member.map(item => item.user.name).join("、");
             element.startAt = formatDate(element.startAt, 1);
             element.endAt = formatDate(element.endAt, 1);
         });
+        console.log(subTableData.value);
         schedulePlanLoading.value = false;
     });
 }
@@ -788,5 +833,9 @@ const handleSortChange = (column, prop, order) => {
 
 .drawer:deep(.el-drawer__header) {
     margin-bottom: 0
+}
+
+.template-input {
+    margin-bottom: 0.5rem;
 }
 </style>

@@ -42,14 +42,15 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="roleDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="roleDialogVisible">
+    <el-dialog v-model="roleDialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="roleDialogVisible"
+        :close-on-click-modal="false">
         <el-form :model="roleForm" :rules="rules" ref="formRef">
             <el-form-item label="角色名称" prop="name" required>
                 <el-input v-model="roleForm.name" placeholder="请填写角色名称" :disabled="roleLevelBoolean"></el-input>
             </el-form-item>
-            <el-form-item label="菜单权限" prop="" required>
-                <el-cascader :options="routerOptions" :props="props" collapse-tags collapse-tags-tooltip clearable
-                    :disabled="roleLevelBoolean" style="width: 100%;" />
+            <el-form-item label="菜单权限" prop="menus" required>
+                <el-cascader v-model="roleForm.menus" :options="routerOptions" :props="props" collapse-tags
+                    collapse-tags-tooltip clearable :disabled="roleLevelBoolean" style="width: 100%;" />
             </el-form-item>
         </el-form>
         <template #footer>
@@ -122,6 +123,7 @@ const role = ref({
 const roleForm = ref({
     id: "",
     name: "",
+    menus: [],
     version: ""
 });
 
@@ -144,10 +146,10 @@ onMounted(() => {
     routes.forEach(element => {
         if (element.children.length > 0 && element.meta.title != "首页") {
             routerOptions.value.push({
-                value: element.path,
+                value: element.meta.title,
                 label: element.meta.title,
                 children: element.children.map(child => {
-                    return { value: child.path, label: child.meta == undefined ? "" : child.meta.title }
+                    return { value: child.meta.title, label: child.meta == undefined ? "" : child.meta.title }
                 })
             });
         }
@@ -221,21 +223,23 @@ const deleteRole = (row) => {
 }
 
 const submit = () => {
-    formRef.value.validate((valid) => {
-        if (valid) {
-            submitButtonLoading.value = true;
-            submitButtonText.value = "提交中";
-            roleAPI.save(roleForm.value).then((res) => {
-                ElMessage.success("提交成功");
-                roleDialogVisible.value = false;
-                getList();
-            }).catch(() => {
-                ElMessage.error("提交失败");
-            });
-            submitButtonLoading.value = false;
-            submitButtonText.value = "提交";
-        }
-    })
+    roleForm.value.menus = roleForm.value.menus.map(item => item.toString().replace(/,/g, "/")).join(",");
+    console.log(roleForm.value);
+    // formRef.value.validate((valid) => {
+    //     if (valid) {
+    //         submitButtonLoading.value = true;
+    //         submitButtonText.value = "提交中";
+    //         roleAPI.save(roleForm.value).then((res) => {
+    //             ElMessage.success("提交成功");
+    //             roleDialogVisible.value = false;
+    //             getList();
+    //         }).catch(() => {
+    //             ElMessage.error("提交失败");
+    //         });
+    //         submitButtonLoading.value = false;
+    //         submitButtonText.value = "提交";
+    //     }
+    // })
 
 }
 const getList = () => {

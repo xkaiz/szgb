@@ -1,21 +1,20 @@
 <template>
-    <el-select v-model="userSelect.id" filterable remote remote-show-suffix clearable :multiple="props.multiple"
+    <el-select v-model="userSelect" filterable remote remote-show-suffix clearable :multiple="props.multiple"
         :collapse-tags="props.collapseTags" :collapse-tags-tooltip="props.collapseTagsTooltip"
-        :remote-method="remoteMethod" :loading="loading" @change="handelChange">
+        :remote-method="remoteMethod" :loading="loading" @change="handelChange" @click="getList">
         <el-option v-for="item in options" :key="item.id" :label="item.name" :value="item.id" />
     </el-select>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, version } from 'vue'
 import userAPI from '@/api/user'
 
-const props = defineProps(["id", "userType", "multiple", "collapseTags", "collapseTagsTooltip"])
+const props = defineProps(["id", "form", "userType", "multiple", "collapseTags", "collapseTagsTooltip"])
 const emit = defineEmits(["model"]);
 
-const userSelect = ref({
-    id: "",
-})
+const userSelect = ref(null)
+const userSelectId = ref(null)
 const loading = ref(true);
 
 const user = ref({
@@ -31,10 +30,21 @@ const user = ref({
 });
 
 onMounted(() => {
-    if (props.id != undefined) {
-        userSelect.value.id = props.id;
+    if (props.form != undefined) {
+        if (props.userType == 'leader') {
+            userSelect.value = props.form.leader.user.name;
+            userSelectId.value = props.form.leader.user.id;
+        } else if (props.userType == 'member') {
+            userSelect.value = []
+            userSelectId.value = []
+            props.form.member.forEach(element => {
+                userSelect.value.push(element.user.name);
+                userSelectId.value.push(element.user.id);
+            });
+        }
+
     }
-    getList();
+    // getList();
 });
 
 const remoteMethod = (query) => {
@@ -45,20 +55,29 @@ const options = ref([]);
 const getList = () => {
     loading.value = true;
     userAPI.list(user.value).then((res) => {
+        userSelect.value = userSelectId.value
         options.value = res.data.page.list;
         loading.value = false;
+        if (props.id != undefined) {
+            userSelect.value = props.id;
+        }
     }).catch((error) => {
         console.log(error);
     });
 };
 
 const handelChange = (data) => {
-
-    emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1 });
+    // let tempData = JSON.parse(JSON.stringify(data));
+    // props.form.member.forEach((element, index) => {
+    //     if (element.user.name == tempData[index]) {
+    //         tempData[index] = element.user.id;
+    //     }
+    // });
+    emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1, id: props.form.id, version: props.form.version });
 };
 
 const clear = () => {
-    userSelect.value.id = "";
+    userSelect.value = null;
 };
 defineExpose({
     clear

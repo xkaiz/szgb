@@ -45,7 +45,8 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="dialogVisible">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="30%" draggable overflow v-if="dialogVisible"
+        :close-on-click-modal="false">
         <el-form :model="userRoleForm" :rules="rules" ref="formRef">
             <el-row :gutter="15">
                 <el-col :span="12">
