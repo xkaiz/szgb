@@ -400,7 +400,8 @@ const setModel = (data) => {
         scheduleForm.value[data.type].id = data.value;
     } else if (data.type == "user") {
         if (Array.isArray(data.value)) {
-            data.value.foreach(element => {
+            console.log(data.value);
+            data.value.forEach(element => {
                 schedulePlanForm.value.schedulePeopleList.push({
                     schedulePlan: {
                         id: schedulePlanForm.value.id
@@ -674,7 +675,7 @@ const submit = (type) => {
                 schedulePlanForm.value.endAt = formatDate(nextDate) + " " + schedulePlanForm.value.endAt + ":00";
             }
         }
-        schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
+        // schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
         schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
             ElMessage.success("提交成功");
             drawerVisible.value = false;

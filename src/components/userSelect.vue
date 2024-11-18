@@ -30,7 +30,7 @@ const user = ref({
 });
 
 onMounted(() => {
-    if (props.form != undefined) {
+    if (props.form != undefined && props.form.id != "") {
         if (props.userType == 'leader') {
             userSelect.value = props.form.leader.user.name;
             userSelectId.value = props.form.leader.user.id;
@@ -44,7 +44,7 @@ onMounted(() => {
         }
 
     }
-    // getList();
+    getList();
 });
 
 const remoteMethod = (query) => {
@@ -69,10 +69,16 @@ const getList = () => {
 const handelChange = (data) => {
     // let tempData = JSON.parse(JSON.stringify(data));
     // props.form.member.forEach((element, index) => {
-    //     if (element.user.name == tempData[index]) {
-    //         tempData[index] = element.user.id;
+    //     for (let i = 0; i < tempData.length; i++) {
+    //         if (element.user.name == tempData[i]) {
+    //             tempData[i] = element.user.id;
+    //             break;
+    //         }
     //     }
     // });
+    // data = tempData;
+    // console.log(data);
+    userSelectId.value = data;
     emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1, id: props.form.id, version: props.form.version });
 };
 
