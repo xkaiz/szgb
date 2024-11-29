@@ -79,7 +79,7 @@ const handelChange = (data) => {
     // data = tempData;
     // console.log(data);
     userSelectId.value = data;
-    emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1, id: props.form.id, version: props.form.version });
+    emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1, props: props.form });
 };
 
 const clear = () => {

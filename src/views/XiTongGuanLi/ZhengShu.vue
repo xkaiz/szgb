@@ -81,10 +81,8 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
-import dictAPI from "@/api/Dict";
 import certificationAPI from "@/api/Certification";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getDicts, isNeedUpdate } from "@/utils/Dict";
 
 const tableData = ref([]);
 const loading = ref(true);
@@ -163,20 +161,9 @@ onMounted(() => {
         window.location.href = "/login?path=ZhengShu";
         return
     }
-    if (store.dict == undefined || isNeedUpdate()) {
-        // dictAPI.list(dict.value).then((res) => {
-        //     store.setDict(buildTree(res.data.dictTree));
-        //     peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
-        //     getList();
-        // })
-        getDicts().then(() => {
-            peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
-            getList();
-        })
-    } else {
-        peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
-        getList();
-    }
+
+    peroidOptions.value = store.dict.find(item => item.label == "证书期限").dictChildren;
+    getList();
 });
 
 const search = () => {

@@ -247,12 +247,16 @@
                                         添加模板
                                     </el-button>
                                     <template v-else>
-                                        <el-input v-model="templateOption" class="template-input" placeholder="输入模板内容"
-                                            type="textarea" size="small" autosize />
-                                        <el-button type="primary" size="small" @click="onTemplateConfirm">
+                                        <div style="width: 100%;">
+                                            <el-input v-model="templateOption" class="template-input"
+                                                placeholder="输入模板内容" type="textarea" size="small" autosize />
+                                        </div>
+
+                                        <el-button type="primary" size="small" @click="onTemplateConfirm(5)">
                                             添加
                                         </el-button>
                                         <el-button size="small" @click="isTemplateAdding = false">取消</el-button>
+
                                     </template>
                                 </template>
                             </el-select>
@@ -345,12 +349,14 @@ const store = useStore();
 import scheduleAPI from "@/api/Schedule";
 import schedulePlanAPI from "@/api/SchedulePlan";
 import exportAPI from "@/api/Export";
+import dictChildrenAPI from "@/api/DictChildren";
+
 import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
 import UserSelect from "@/components/UserSelect.vue";
 import { formatDate } from "@/utils/Format";
-import { getDicts, isNeedUpdate } from "@/utils/Dict";
+import { getDicts } from "@/utils/Dict";
 
 const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
@@ -379,20 +385,13 @@ const scheduleFormRef = ref(null);
 
 const isTemplateAdding = ref(false);
 const templateOption = ref("");
-const onAddTemplateOption = (option) => {
+const onAddTemplateOption = () => {
     isTemplateAdding.value = true;
 }
 
-const onTemplateConfirm = () => {
+const onTemplateConfirm = (id) => {
 
 }
-
-const scheduleFormRules = {
-    name: [
-        { required: true, message: "请输入角色名称", trigger: "blur" },
-    ],
-}
-
 
 const setModel = (data) => {
     console.log("子组件传递的数据：", data);
@@ -400,32 +399,17 @@ const setModel = (data) => {
         scheduleForm.value[data.type].id = data.value;
     } else if (data.type == "user") {
         if (Array.isArray(data.value)) {
-            console.log(data.value);
-            data.value.forEach(element => {
-                schedulePlanForm.value.schedulePeopleList.push({
-                    schedulePlan: {
-                        id: schedulePlanForm.value.id
-                    },
-                    type: data.userType,
-                    user: {
-                        id: element
-                    },
-                    id: data.id,
-                    version: data.version
+            data.value.forEach((item) => {
+                schedulePlanForm.value.member.forEach((member) => {
+                    if (item == member.user.id) {
+                        schedulePlanForm.value.schedulePeopleList.push(member);
+                    }
                 });
+                schedulePlanForm.value.schedulePeopleList.push(schedulePlanForm.value.leader)
             });
+            console.log(schedulePlanForm.value);
         } else {
-            schedulePlanForm.value.schedulePeopleList.push({
-                schedulePlan: {
-                    id: schedulePlanForm.value.id
-                },
-                type: data.userType,
-                user: {
-                    id: data.value
-                },
-                id: data.id,
-                version: data.version
-            });
+            console.log(data);
         }
     } else {
         schedulePlanForm.value[data.type] = data.value;
@@ -633,16 +617,8 @@ const deleteSchedulePlan = (row) => {
 }
 
 const initDictSelectOptions = () => {
-    if (store.dict == undefined || isNeedUpdate()) {
-        getDicts().then(() => {
-            taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
-            scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
-        });
-    } else {
-        taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
-        scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
-    }
-
+    taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
+    scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
 }
 
 const submit = (type) => {
@@ -660,6 +636,7 @@ const submit = (type) => {
             ElMessage.error("提交失败");
         });
     } else if (type == 2) {
+        console.log(schedulePlanForm.value);
         schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
         schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
         const nextDate = new Date(scheduleForm.value.date);

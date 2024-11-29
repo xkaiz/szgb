@@ -8,9 +8,6 @@
 import { onMounted, ref } from 'vue'
 import useStore from "@/store/index";
 const store = useStore();
-import dictAPI from '@/api/dict';
-import { buildTree } from "@/utils/BuildTree";
-import { getDicts, isNeedUpdate } from '../utils/Dict';
 
 const props = defineProps(["dict", "form"])
 const emit = defineEmits(["model"]);
@@ -40,31 +37,12 @@ const getDictList = () => {
     loading.value = true;
     propsDict.value.cname = props.dict.split("/")[0];
     propsDict.value.name = props.dict.split("/")[1];
-    // dictAPI.list(dict.value).then((res) => {
-    //     store.setDict(buildTree(res.data.dictTree));
-    //     options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
-    //     if (props.form[propsDict.value.name] != "") {
-    //         dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
-    //     }
-    //     loading.value = false;
-    // }).catch((error) => {
-    //     console.log(error);
-    // });
-    if (store.dict == undefined || isNeedUpdate()) {
-        getDicts().then(() => {
-            options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
-            if (props.form[propsDict.value.name] != "") {
-                dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
-            }
-            loading.value = false;
-        })
-    } else {
-        options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
-        if (props.form[propsDict.value.name] != "") {
-            dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
-        }
-        loading.value = false;
+    options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
+    if (props.form[propsDict.value.name] != "") {
+        dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
     }
+    loading.value = false;
+
 };
 
 const handelChange = (data) => {

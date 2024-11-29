@@ -18,18 +18,11 @@ export const getDicts = () => {
 		.list(dict.value)
 		.then((res) => {
 			store.setDict(buildTree(res.data.dictTree));
-			store.setDictUpdateDate(new Date().getTime());
+			console.log("字典加载成功");
 		})
 		.catch((err) => {
 			console.log(err);
 			ElMessage.error("字典加载失败，请检查网络连接");
 			return Promise.reject(err);
 		});
-};
-
-export const isNeedUpdate = () => {
-	const currentDate = new Date().getTime();
-	const updateDate = store.dictUpdateTime;
-	if (!updateDate) return true;
-	return (currentDate - updateDate) / 1000 > 60 * 60 * 24 * 3;
 };

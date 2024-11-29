@@ -147,7 +147,7 @@ import dictAPI from "@/api/Dict";
 import dictChildrenAPI from "@/api/DictChildren";
 import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getDicts, isNeedUpdate } from "@/utils/Dict";
+import { getDicts } from "@/utils/Dict";
 
 const treeRef = ref(null);
 const treeData = ref([]);
@@ -271,23 +271,10 @@ onMounted(() => {
         window.location.href = "/login?path=ZiDian";
         return
     }
-    // dictAPI.list(dict.value).then((res) => {
-    //     store.setDict(buildTree(res.data.dictTree));
-    //     treeData.value = store.dict;
-    //     dictLoading.value = false;
-    //     dictChildrenLoading.value = false
-    // })
-    if (store.dict == undefined || isNeedUpdate()) {
-        getDicts().then(() => {
-            treeData.value = store.dict;
-            dictLoading.value = false;
-            dictChildrenLoading.value = false
-        })
-    } else {
-        treeData.value = store.dict;
-        dictLoading.value = false;
-        dictChildrenLoading.value = false
-    }
+
+    treeData.value = store.dict;
+    dictLoading.value = false;
+    dictChildrenLoading.value = false
 });
 
 //处理字典数据树节点点击
@@ -467,18 +454,17 @@ const submit = (type) => {
 //获取字典列表
 const getDictList = () => {
     dictLoading.value = true;
-    dictAPI.list(dict.value).then((res) => {
-        treeData.value = buildTree(res.data.dictTree);
+    getDicts().then(() => {
+        treeData.value = store.dict;
         dictLoading.value = false;
-    });
+    })
 };
 
 //获取字典数据列表
 const getDictChildrenList = (dictID) => {
     dictChildrenLoading.value = true;
-    dictAPI.list(dict.value).then((res) => {
-        treeData.value = buildTree(res.data.dictTree);
-        store.setDict(buildTree(res.data.dictTree));
+    getDicts().then(() => {
+        treeData.value = store.dict;
         dictChildrenLoading.value = false;
         treeData.value.forEach((item) => {
             if (item.value == dictID) {
@@ -488,7 +474,7 @@ const getDictChildrenList = (dictID) => {
         nextTick(() => {
             treeRef.value.setCurrentKey(dictID)
         })
-    });
+    })
 };
 
 //刷新表格
