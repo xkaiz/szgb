@@ -2,10 +2,19 @@
     <div id="app">
         <h1>JSON2Excel</h1>
         <input type="file" @change="handleFileUpload" accept=".txt" multiple />
-        <button @click="convertToExcel">转换为Excel</button>
+
+        <label>
+            <input type="radio" value="multipleChoice" v-model="questionType" />
+            选项型
+        </label>
+        <label>
+            <input type="radio" value="openEnded" v-model="questionType" />
+            问答型
+        </label>
+
+        <el-button @click="convertToExcel">转换为Excel</el-button>
     </div>
 </template>
-
 <script>
 import * as XLSX from 'xlsx';
 
@@ -13,7 +22,8 @@ export default {
     name: 'App',
     data() {
         return {
-            jsonData: []
+            jsonData: [],
+            questionType: 'multipleChoice' // Default selection
         };
     },
     methods: {
@@ -29,7 +39,7 @@ export default {
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         try {
-                            const data = JSON.parse(e.target.result);
+                            const data = JSON.parse(e.target.result).data.rows;
                             if (!Array.isArray(data)) {
                                 throw new Error('JSON data is not an array.');
                             }
@@ -44,7 +54,6 @@ export default {
 
             Promise.all(promises)
                 .then(results => {
-                    // 合并所有 JSON 数据
                     this.jsonData = results.flat();
                 })
                 .catch(error => {
@@ -53,34 +62,37 @@ export default {
         },
         convertToExcel() {
             if (!this.jsonData.length) {
-                alert('No JSON data available. Please upload files first.');
+                alert('没有可用的 JSON 数据。请先上传文件。');
                 return;
             }
 
-            // 提取问题和正确答案
-            const extractedData = this.jsonData.map(item => ({
-                question: item.questionName,
-                correctAnswer: item.enterExamQuestionOptionVOList.find(option => option.rightAnswer === 1)?.questionOptionValue || '无'
-            }));
+            const extractedData = this.jsonData.map(item => {
+                // Get correct answers with corresponding option labels
+                const options = item.enterExamQuestionOptionVOList.map((option, index) => {
+                    return { label: String.fromCharCode(65 + index), value: option.questionOptionValue, isCorrect: option.rightAnswer === 1 };
+                });
 
-            // 转换为工作表
-            const worksheet = XLSX.utils.json_to_sheet(extractedData);
+                const correctAnswers = options.filter(option => option.isCorrect).map(option => option.label).join(''); // No separator
+
+                if (this.questionType === 'multipleChoice') {
+                    // Format for multiple choice
+                    const optionValues = options.map(option => option.value).slice(0, 5); // Ensure only A-E
+                    return [item.questionName, correctAnswers || '无', '', ...optionValues];
+                } else {
+                    // Format for open-ended: only include the answer
+                    const answer = options.find(option => option.isCorrect)?.value || '无'; // Get the correct answer or '无'
+                    return [item.questionName, answer];
+                }
+            });
+
+            // Create worksheet with the extracted data
+            const worksheet = XLSX.utils.aoa_to_sheet(extractedData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Questions');
 
-            // 生成 Excel 文件
+            // Generate Excel file
             XLSX.writeFile(workbook, 'output.xlsx');
         }
     }
 };
 </script>
-
-<style>
-#app {
-    text-align: center;
-}
-
-input {
-    margin: 10px;
-}
-</style>

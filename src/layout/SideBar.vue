@@ -1,5 +1,5 @@
 <template>
-    <el-menu :default-active="defaultActive" mode="vertical" router>
+    <el-menu :default-active="defaultActive" :default-openeds="defaultOpeneds" mode="vertical" router>
         <template v-for="menuItem in menuItems" :key="menuItem.name">
             <el-menu-item :index="menuItem.path" v-if="menuItem.child.length === 0">
                 {{ menuItem.name }}
@@ -38,10 +38,11 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const url = window.location.href
-const defaultActive = ref(url.split("/")[3] || "home")
+const defaultActive = ref(localStorage.getItem('activeMenu') || 'home')
+const defaultOpeneds = JSON.parse(localStorage.getItem('openMenu')) || []
 
 const menuItems = ref([])
+
 const traverseRoutes = (children) => {
     return children.map(child => ({
         name: child.meta.title,
@@ -68,14 +69,10 @@ const createMenuItems = (routes) => {
 };
 
 onMounted(() => {
-    menuItems.value = createMenuItems(router.options.routes);
-    console.log(menuItems.value);
-})
-</script>
+    menuItems.value = createMenuItems(router.options.routes)
 
-<style scoped>
-.logo {
-    margin-left: 1vw;
-    margin-right: 1vw;
-}
-</style>
+    router.afterEach((to) => {
+        localStorage.setItem('activeMenu', to.path)
+    });
+});
+</script>

@@ -57,6 +57,7 @@ const path = ref("home");
 onMounted(() => {
     const url = new URL(window.location.href);
     path.value = url.searchParams.get('path') == null ? "home" : url.searchParams.get('path');
+    localStorage.setItem("activeMenu", "/home");
     autoLogin();
 });
 

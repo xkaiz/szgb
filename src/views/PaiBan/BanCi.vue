@@ -228,7 +228,7 @@
         <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false"
             v-if="drawerVisible">
             <template #header>
-                <h3>编辑计划</h3>
+                <h3>{{ drawerTitle }}</h3>
             </template>
             <el-form :model="schedulePlanForm" label-width="80">
                 <el-row :gutter="15">
@@ -371,6 +371,7 @@ const total = ref(0);
 
 const dialogVisible = ref(false);
 const dialogTitle = ref("");
+const drawerTitle = ref("");
 
 const drawerVisible = ref(false);
 
@@ -398,18 +399,14 @@ const setModel = (data) => {
     if (data.type == "department") {
         scheduleForm.value[data.type].id = data.value;
     } else if (data.type == "user") {
-        if (Array.isArray(data.value)) {
-            data.value.forEach((item) => {
-                schedulePlanForm.value.member.forEach((member) => {
-                    if (item == member.user.id) {
-                        schedulePlanForm.value.schedulePeopleList.push(member);
-                    }
-                });
-                schedulePlanForm.value.schedulePeopleList.push(schedulePlanForm.value.leader)
-            });
-            console.log(schedulePlanForm.value);
-        } else {
-            console.log(data);
+        if (drawerTitle.value == "新建计划") {
+
+        } else if (drawerTitle.value == "编辑计划") {
+            if (data.userType == "0") {
+                schedulePlanForm.value.leaderId = data.value
+            } else if (data.userType == "1") {
+                schedulePlanForm.value.memberIds = data.value
+            }
         }
     } else {
         schedulePlanForm.value[data.type] = data.value;
@@ -486,6 +483,12 @@ const initialSchedulePlanForm = {
         id: "",
     },
     schedulePeopleList: [],
+    leader: "",
+    leaderName: "",
+    leaderId: "",
+    member: [],
+    memberNames: "",
+    memberIds: [],
     taskType: "",
     taskName: "",
     location: "",
@@ -582,15 +585,17 @@ const deleteSchedule = (row) => {
 }
 
 const addSchedulePlan = () => {
+    drawerTitle.value = "新建计划";
     resetSchedulePlanForm()
     schedulePlanForm.value.schedule.id = scheduleForm.value.id
     drawerVisible.value = true;
 }
 
 const editSchedulePlan = (row) => {
+    drawerTitle.value = "编辑计划";
     row.schedulePeopleList = [];
     schedulePlanForm.value = JSON.parse(JSON.stringify(row));
-    console.log(schedulePlanForm.value);
+    schedulePlanForm.value.schedulePeopleList = []
     drawerVisible.value = true;
 }
 
@@ -621,6 +626,10 @@ const initDictSelectOptions = () => {
     scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
 }
 
+/**
+ * 提交表单
+ * @param {*} type 1:提交班次 2：提交计划 
+ */
 const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
@@ -636,23 +645,37 @@ const submit = (type) => {
             ElMessage.error("提交失败");
         });
     } else if (type == 2) {
-        console.log(schedulePlanForm.value);
-        schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
-        schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
-        const nextDate = new Date(scheduleForm.value.date);
-        if (schedulePlanForm.value.startAt.split(' ').length == 1 && schedulePlanForm.value.endAt.split(' ').length == 1) {
-            if (schedulePlanForm.value.scheduleType != "间接") {
-                const range = scheduleColumns.find(column => column.label == schedulePlanForm.value.scheduleType || column.id == schedulePlanForm.value.scheduleType).value.split('-');
-                schedulePlanForm.value.startAt = scheduleForm.value.date + " " + range[0] + ":00";
-                nextDate.setDate(nextDate.getDate() + (schedulePlanForm.value.scheduleType == 3 ? 1 : 0));
-                schedulePlanForm.value.endAt = formatDate(nextDate) + " " + range[1] + ":00";
-            } else if (schedulePlanForm.value.scheduleType == "间接" && schedulePlanForm.value.startAt != "" && schedulePlanForm.value.endAt != "") {
-                schedulePlanForm.value.startAt = scheduleForm.value.date + " " + schedulePlanForm.value.startAt + ":00";
-                nextDate.setDate(nextDate.getDate() + (nextDay.value ? 1 : 0));
-                schedulePlanForm.value.endAt = formatDate(nextDate) + " " + schedulePlanForm.value.endAt + ":00";
+        if (drawerTitle.value == "编辑计划") {
+            schedulePlanForm.value.schedulePeopleList.push({
+                "user": {
+                    "id": schedulePlanForm.value.leaderId,
+                },
+                type: 0
+            });
+            schedulePlanForm.value.memberIds.forEach((item) => {
+                schedulePlanForm.value.schedulePeopleList.push({
+                    "user": {
+                        "id": item,
+                    },
+                    type: 1
+                })
+            });
+            schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
+            schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
+            const nextDate = new Date(scheduleForm.value.date);
+            if (schedulePlanForm.value.startAt.split(' ').length == 1 && schedulePlanForm.value.endAt.split(' ').length == 1) {
+                if (schedulePlanForm.value.scheduleType != "间接") {
+                    const range = scheduleColumns.find(column => column.label == schedulePlanForm.value.scheduleType || column.id == schedulePlanForm.value.scheduleType).value.split('-');
+                    schedulePlanForm.value.startAt = scheduleForm.value.date + " " + range[0] + ":00";
+                    nextDate.setDate(nextDate.getDate() + (schedulePlanForm.value.scheduleType == 3 ? 1 : 0));
+                    schedulePlanForm.value.endAt = formatDate(nextDate) + " " + range[1] + ":00";
+                } else if (schedulePlanForm.value.scheduleType == "间接" && schedulePlanForm.value.startAt != "" && schedulePlanForm.value.endAt != "") {
+                    schedulePlanForm.value.startAt = scheduleForm.value.date + " " + schedulePlanForm.value.startAt + ":00";
+                    nextDate.setDate(nextDate.getDate() + (nextDay.value ? 1 : 0));
+                    schedulePlanForm.value.endAt = formatDate(nextDate) + " " + schedulePlanForm.value.endAt + ":00";
+                }
             }
         }
-        // schedulePlanForm.value.schedulePeopleList.push(...schedulePlanMember.value);
         schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
             ElMessage.success("提交成功");
             drawerVisible.value = false;
@@ -667,6 +690,7 @@ const submit = (type) => {
     submitButtonText.value = "提交";
 }
 const getScheduleList = () => {
+    resetScheduleForm();
     scheduleLoading.value = true;
     scheduleAPI.list(scheduleForm.value).then((res) => {
         res.data.page.list.forEach((item) => {
@@ -696,10 +720,10 @@ const getSchedulePlanList = (scheduleID) => {
             element.leaderId = element.schedulePeopleList.find(item => item.type == "0").user.id;
             element.member = element.schedulePeopleList.filter(item => item.type == "1");
             element.memberNames = element.member.map(item => item.user.name).join("、");
+            element.memberIds = element.member.map(item => item.user.id)
             element.startAt = formatDate(element.startAt, 1);
             element.endAt = formatDate(element.endAt, 1);
         });
-        console.log(subTableData.value);
         schedulePlanLoading.value = false;
     });
 }
@@ -722,6 +746,7 @@ const getSchedulePlanList = (scheduleID) => {
 
 
 const refreshScheduleTable = () => {
+    console.log(scheduleForm.value);
     scheduleForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getScheduleList();
