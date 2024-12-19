@@ -340,7 +340,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, version } from "vue";
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 import useStore from "@/store/index";
@@ -486,9 +486,11 @@ const initialSchedulePlanForm = {
     leader: "",
     leaderName: "",
     leaderId: "",
+    leaderData: {},
     member: [],
     memberNames: "",
     memberIds: [],
+    memberData: [],
     taskType: "",
     taskName: "",
     location: "",
@@ -593,9 +595,24 @@ const addSchedulePlan = () => {
 
 const editSchedulePlan = (row) => {
     drawerTitle.value = "编辑计划";
-    row.schedulePeopleList = [];
     schedulePlanForm.value = JSON.parse(JSON.stringify(row));
+    schedulePlanForm.value.memberData = []
+    schedulePlanForm.value.schedulePeopleList.forEach((item) => {
+        if (item.type == "0") {
+            schedulePlanForm.value.leaderData = {
+                id: item.id,
+                version: item.version,
+            };
+        } else if (item.type == "1") {
+            schedulePlanForm.value.memberData.push({
+                id: item.id,
+                version: item.version,
+            });
+
+        }
+    });
     schedulePlanForm.value.schedulePeopleList = []
+    console.log(schedulePlanForm.value.memberData);
     drawerVisible.value = true;
 }
 
@@ -647,18 +664,32 @@ const submit = (type) => {
     } else if (type == 2) {
         if (drawerTitle.value == "编辑计划") {
             schedulePlanForm.value.schedulePeopleList.push({
-                "user": {
+                id: schedulePlanForm.value.leaderData.id,
+                user: {
                     "id": schedulePlanForm.value.leaderId,
                 },
-                type: 0
+                type: 0,
+                version: schedulePlanForm.value.leaderData.version
             });
-            schedulePlanForm.value.memberIds.forEach((item) => {
-                schedulePlanForm.value.schedulePeopleList.push({
-                    "user": {
-                        "id": item,
-                    },
-                    type: 1
-                })
+            schedulePlanForm.value.memberIds.forEach((item, index) => {
+                if (index < schedulePlanForm.value.memberData.length) {
+                    schedulePlanForm.value.schedulePeopleList.push({
+                        id: schedulePlanForm.value.memberData[index].id,
+                        user: {
+                            "id": item,
+                        },
+                        type: 1,
+                        version: schedulePlanForm.value.memberData[index].version
+                    })
+                } else {
+                    schedulePlanForm.value.schedulePeopleList.push({
+                        id: "",
+                        user: {
+                            "id": item,
+                        },
+                        type: 1,
+                    })
+                }
             });
             schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
             schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
@@ -679,7 +710,7 @@ const submit = (type) => {
         schedulePlanAPI.save(schedulePlanForm.value).then((res) => {
             ElMessage.success("提交成功");
             drawerVisible.value = false;
-            getSchedulePlanList(schedulePlanForm.value.schedule.id);
+            getSchedulePlanList(schedulePlanForm.value.id);
         }).catch((error) => {
             console.log(error);
             ElMessage.error("提交失败");
