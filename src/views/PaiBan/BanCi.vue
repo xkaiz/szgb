@@ -239,7 +239,8 @@
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="任务名称" prop="taskName">
-                            <el-select v-model="schedulePlanForm.taskName" filterable allow-create default-first-option
+                            <el-input v-model="schedulePlanForm.taskName" placeholder="请输入" />
+                            <!-- <el-select v-model="schedulePlanForm.taskName" filterable allow-create default-first-option
                                 :disabled="roleLevelBoolean">
                                 <template #footer>
                                     <el-button v-if="!isTemplateAdding" text bg size="small"
@@ -259,16 +260,17 @@
 
                                     </template>
                                 </template>
-                            </el-select>
+                            </el-select> -->
                         </el-form-item>
                     </el-col>
                 </el-row>
                 <el-row :gutter="15">
                     <el-col :span="12">
                         <el-form-item label="任务地点" prop="location">
-                            <el-select v-model="schedulePlanForm.location" filterable allow-create default-first-option
+                            <el-input v-model="schedulePlanForm.location" placeholder="请输入" />
+                            <!-- <el-select v-model="schedulePlanForm.location" filterable allow-create default-first-option
                                 :disabled="roleLevelBoolean">
-                            </el-select>
+                            </el-select> -->
                         </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -671,6 +673,9 @@ const submit = (type) => {
                 type: 0,
                 version: schedulePlanForm.value.leaderData.version
             });
+            if (schedulePlanForm.value.memberData.length > schedulePlanForm.value.memberIds.length) {
+                schedulePlanForm.value.memberData = schedulePlanForm.value.memberData.slice(0, schedulePlanForm.value.memberIds.length);
+            }
             schedulePlanForm.value.memberIds.forEach((item, index) => {
                 if (index < schedulePlanForm.value.memberData.length) {
                     schedulePlanForm.value.schedulePeopleList.push({
