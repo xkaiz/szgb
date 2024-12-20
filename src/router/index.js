@@ -94,6 +94,12 @@ const routes = [
 				name: "QuanXian",
 				meta: { title: "权限管理" },
 			},
+			{
+				path: "/XianLu",
+				component: () => import("@/views/XiTongGuanLi/XianLu.vue"),
+				name: "XianLu",
+				meta: { title: "线路管理" },
+			},
 		],
 	},
 ];

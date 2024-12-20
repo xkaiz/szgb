@@ -10,15 +10,15 @@
                 </el-col>
             </el-row>
             <el-tree ref="treeRef" :data="treeData" highlight-current @node-click="handleNodeClick"
-                :filter-node-method="filterNode" v-loading="dictLoading" default-expand-all
+                :filter-node-method="filterNode" v-loading="lineLoading" default-expand-all
                 :expand-on-click-node="false" node-key="value" />
         </el-aside>
         <el-main class="main">
             <el-row class="toolbar">
                 <div>
-                    <el-button type="primary" @click="addDictChildren" v-if="!roleLevelBoolean"
-                        :disabled="addDictButtonDisabled">新增</el-button>
-                    <el-button type="danger" plain :disabled="deleteDictButtonDisabled" @click="deleteDictChildren"
+                    <el-button type="primary" @click="addLineChildren" v-if="!roleLevelBoolean"
+                        :disabled="addLineButtonDisabled">新增</el-button>
+                    <el-button type="danger" plain :disabled="deleteLineButtonDisabled" @click="deleteLineChildren"
                         v-if="!roleLevelBoolean">删除</el-button>
                 </div>
                 <el-button-group>
@@ -26,7 +26,7 @@
                         @click="refreshTable">刷新</el-button>
                 </el-button-group>
             </el-row>
-            <el-table class="table" :data="tableData" stripe v-loading="dictChildrenLoading"
+            <el-table class="table" :data="tableData" stripe v-loading="lineChildrenLoading"
                 @selection-change="handleSelectionChange" row-key="id">
                 <el-table-column type="selection" header-align="center" align="center" />
                 <el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
@@ -34,10 +34,10 @@
                 <el-table-column prop="value" label="值" align="center" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
-                        <el-button link type="primary" size="small" @click="editDictChildren(scope.row)">
+                        <el-button link type="primary" size="small" @click="editLineChildren(scope.row)">
                             {{ editButtonText }}
                         </el-button>
-                        <el-button link type="primary" size="small" @click="deleteDictChildren(scope.row)"
+                        <el-button link type="primary" size="small" @click="deleteLineChildren(scope.row)"
                             v-if="!roleLevelBoolean">删除</el-button>
                     </template>
                 </el-table-column>
@@ -49,19 +49,19 @@
             </el-row>
         </el-main>
     </el-container>
-    <el-dialog v-model="dictChildrenDialogVisible" :title="dialogTitle" width="30%" draggable overflow
+    <el-dialog v-model="lineChildrenDialogVisible" :title="dialogTitle" width="30%" draggable overflow
         :close-on-click-modal="false">
-        <el-form :model="dictChildrenForm" ref="dictChildrenFormRef" :rules="dictChildrenRules">
+        <el-form :model="lineChildrenForm" ref="lineChildrenFormRef" :rules="lineChildrenRules">
             <el-row :gutter="15">
                 <el-col :span="12">
                     <el-form-item label="键" prop="label" required>
-                        <el-input v-model="dictChildrenForm.label" placeholder="请填写键"
+                        <el-input v-model="lineChildrenForm.label" placeholder="请填写键"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
                 </el-col>
                 <el-col :span="12">
                     <el-form-item label="值" prop="value" required>
-                        <el-input v-model="dictChildrenForm.value" placeholder="请填写值"
+                        <el-input v-model="lineChildrenForm.value" placeholder="请填写值"
                             :disabled="roleLevelBoolean"></el-input>
                     </el-form-item>
                 </el-col>
@@ -69,8 +69,8 @@
         </el-form>
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="dictChildrenDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
-                <el-button type="primary" @click="submit('dictChildren')" :loading="submitButtonLoading"
+                <el-button @click="lineChildrenDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+                <el-button type="primary" @click="submit('lineChildren')" :loading="submitButtonLoading"
                     v-if="!roleLevelBoolean">
                     {{ submitButtonText }}
                 </el-button>
@@ -81,7 +81,7 @@
     <div class="drawer">
         <el-drawer v-model="drawerVisible" direction="ltr" size="30%" :close-on-click-modal="false">
             <template #header>
-                <h3>字典数据管理</h3>
+                <h3>线路数据管理</h3>
             </template>
             <template #default>
                 <el-row :gutter="5">
@@ -89,23 +89,23 @@
                         <el-input v-model="filterText" class="filter" placeholder="筛选" clearable />
                     </el-col>
                     <el-col :span="3">
-                        <el-button type="primary" @click="addDict()" v-if="!roleLevelBoolean">新增</el-button>
+                        <el-button type="primary" @click="addLine()" v-if="!roleLevelBoolean">新增</el-button>
                     </el-col>
                     <el-col :span="3">
-                        <el-button type="danger" plain :disabled="deleteDictButtonDisabled" v-if="!roleLevelBoolean"
-                            @click="deleteDictChildren(dictChildrenIDs)">删除</el-button>
+                        <el-button type="danger" plain :disabled="deleteLineButtonDisabled" v-if="!roleLevelBoolean"
+                            @click="deleteLineChildren(lineChildrenIDs)">删除</el-button>
                     </el-col>
                 </el-row>
                 <el-tree ref="treeRef" :data="treeData" highlight-current :filter-node-method="filterNode" show-checkbox
-                    @check-change="handleCheckChange" v-loading="dictLoading" check-strictly node-key="value"
+                    @check-change="handleCheckChange" v-loading="lineLoading" check-strictly node-key="value"
                     default-expand-all>
                     <template #default="{ node, data }">
                         <span class="tree-node">
                             <span>{{ node.label }}</span>
                             <span>
-                                <el-button class="blue-text-button" link @click="editDict(data, $event);
+                                <el-button class="blue-text-button" link @click="editLine(data, $event);
                                 $event.stopPropagation()">{{ editButtonText }}</el-button>
-                                <el-button class="blue-text-button" link @click="deleteDict(node, data, $event);
+                                <el-button class="blue-text-button" link @click="deleteLine(node, data, $event);
                                 $event.stopPropagation()" v-if="!roleLevelBoolean">删除</el-button>
                             </span>
                         </span>
@@ -116,17 +116,17 @@
             </template>
         </el-drawer>
     </div>
-    <el-dialog v-model="dictDialogVisible" :title="dialogTitle" width="30%" draggable overflow
+    <el-dialog v-model="lineDialogVisible" :title="dialogTitle" width="30%" draggable overflow
         :close-on-click-modal="false">
-        <el-form :model="dictForm" ref="dictFormRef" :rules="dictRules">
-            <el-form-item label="字典数据名称" prop="name" required>
-                <el-input v-model="dictForm.name" placeholder="请填写字典数据名称" :disabled="roleLevelBoolean"></el-input>
+        <el-form :model="lineForm" ref="lineFormRef" :rules="lineRules">
+            <el-form-item label="线路数据名称" prop="name" required>
+                <el-input v-model="lineForm.name" placeholder="请填写线路数据名称" :disabled="roleLevelBoolean"></el-input>
             </el-form-item>
         </el-form>
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="dictDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
-                <el-button type="primary" @click="submit('dict')" :loading="submitButtonLoading"
+                <el-button @click="lineDialogVisible = false" v-if="!roleLevelBoolean">取消</el-button>
+                <el-button type="primary" @click="submit('line')" :loading="submitButtonLoading"
                     v-if="!roleLevelBoolean">
                     {{ submitButtonText }}
                 </el-button>
@@ -143,10 +143,11 @@ const { cookies } = useCookies();
 import useStore from "@/store/index";
 const store = useStore();
 
-import dictAPI from "@/api/Dict";
-import dictChildrenAPI from "@/api/DictChildren";
+import lineAPI from "@/api/Line";
+import lineChildrenAPI from "@/api/LineChildren";
+import { buildTree } from "@/utils/BuildTree";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { getDicts } from "@/utils/Dict";
+import { getLines } from "@/utils/Line";
 
 const treeRef = ref(null);
 const treeData = ref([]);
@@ -154,13 +155,13 @@ const filterText = ref("");
 const tableData = ref([]);
 
 //加载状态
-const dictChildrenLoading = ref(true);
-const dictLoading = ref(true);
+const lineChildrenLoading = ref(true);
+const lineLoading = ref(true);
 const submitButtonLoading = ref(false);
 
 //组件显示
-const dictDialogVisible = ref(false);
-const dictChildrenDialogVisible = ref(false);
+const lineDialogVisible = ref(false);
+const lineChildrenDialogVisible = ref(false);
 const drawerVisible = ref(false);
 
 //文本变量
@@ -175,28 +176,28 @@ const editButtonText = computed(() => {
 });
 
 //组件可用性
-const addDictButtonDisabled = ref(true);
-const deleteDictButtonDisabled = ref(true);
+const addLineButtonDisabled = ref(true);
+const deleteLineButtonDisabled = ref(true);
 const refreshTableButtonDisabled = ref(true);
-const deleteDictChildrenButtonDisabled = ref(true);
+const deleteLineChildrenButtonDisabled = ref(true);
 
-//字典数据树相关
+//线路数据树相关
 const treeChecked = ref([])
 
-//字典和字典数据被多选选中的id
-const dictIDs = ref("");
-const dictChildrenIDs = ref("");
+//线路和线路数据被多选选中的id
+const lineIDs = ref("");
+const lineChildrenIDs = ref("");
 
 //分页相关
 const pageNo = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
 
-//字典和字典数据表单规则相关
-const dictChildrenFormRef = ref(null);
-const dictFormRef = ref(null);
+//线路和线路数据表单规则相关
+const lineChildrenFormRef = ref(null);
+const lineFormRef = ref(null);
 
-const dictChildrenRules = ref({
+const lineChildrenRules = ref({
     label: [
         { required: true, message: "键不能为空", trigger: "blur" },
     ],
@@ -205,9 +206,9 @@ const dictChildrenRules = ref({
     ]
 });
 
-const dictRules = ref({
+const lineRules = ref({
     name: [
-        { required: true, message: "字典数据名称不能为空", trigger: "blur" },
+        { required: true, message: "线路数据名称不能为空", trigger: "blur" },
     ],
 });
 
@@ -221,8 +222,8 @@ const roleLevelBoolean = computed(() => {
     }
 });
 
-//字典查询
-const dict = ref({
+//线路查询
+const line = ref({
     page: {
         pageNo: 1,
         pageSize: 20,
@@ -230,9 +231,9 @@ const dict = ref({
     }
 });
 
-//字典数据查询
-const dictChildren = ref({
-    dict: {
+//线路数据查询
+const lineChildren = ref({
+    line: {
         id: ""
     },
     page: {
@@ -242,8 +243,8 @@ const dictChildren = ref({
     }
 });
 
-//字典表单
-const dictForm = ref({
+//线路表单
+const lineForm = ref({
     id: "",
     name: "",
     page: {
@@ -253,10 +254,10 @@ const dictForm = ref({
     }
 });
 
-//字典数据表单
-const dictChildrenForm = ref({
+//线路数据表单
+const lineChildrenForm = ref({
     id: "",
-    dict: {
+    line: {
         id: ""
     },
     label: "",
@@ -271,18 +272,18 @@ onMounted(() => {
         return
     }
 
-    treeData.value = store.dict;
-    dictLoading.value = false;
-    dictChildrenLoading.value = false
+    treeData.value = store.line;
+    lineLoading.value = false;
+    lineChildrenLoading.value = false
 });
 
-//处理字典数据树节点点击
+//处理线路数据树节点点击
 const handleNodeClick = (data) => {
-    addDictButtonDisabled.value = false
-    store.dict.map((item) => {
+    addLineButtonDisabled.value = false
+    store.line.map((item) => {
         if (item.value == data.value) {
-            tableData.value = item.dictChildren;
-            dictChildrenForm.value.dict.id = item.value
+            tableData.value = item.lineChildren;
+            lineChildrenForm.value.line.id = item.value
             refreshTableButtonDisabled.value = false
         }
     })
@@ -291,26 +292,26 @@ const handleNodeClick = (data) => {
     }
 
 };
-//字典树筛选
+//线路树筛选
 const filterNode = (value, data) => {
     if (!value) return true
     return data.label.includes(value)
 }
-//字典树筛选文本监听
+//线路树筛选文本监听
 watch(filterText, (value) => {
     treeRef.value.filter(value)
 })
-//处理字典树节点选中
+//处理线路树节点选中
 const handleCheckChange = (data) => {
     const node = treeRef.value.getCheckedNodes(false, false)
     treeChecked.value = node
-    dictIDs.value = treeChecked.value.map((item) => item.value).join(",");
-    deleteDictChildrenButtonDisabled.value = (treeChecked.value.length == 0);
+    lineIDs.value = treeChecked.value.map((item) => item.value).join(",");
+    deleteLineChildrenButtonDisabled.value = (treeChecked.value.length == 0);
 }
 
 //表单重置
 const resetForm = () => {
-    dictForm.value = {
+    lineForm.value = {
         id: "",
         name: "",
         page: {
@@ -319,10 +320,10 @@ const resetForm = () => {
             orderBy: ""
         }
     }
-    dictChildrenForm.value = {
+    lineChildrenForm.value = {
         id: "",
-        dict: {
-            id: dictChildrenForm.value.dict.id
+        line: {
+            id: lineChildrenForm.value.line.id
         },
         label: "",
         value: "",
@@ -330,35 +331,35 @@ const resetForm = () => {
     }
 }
 
-//新增字典
-const addDict = () => {
+//新增线路
+const addLine = () => {
     resetForm()
-    dictDialogVisible.value = true;
-    dialogTitle.value = "新建字典";
+    lineDialogVisible.value = true;
+    dialogTitle.value = "新建线路";
 }
-//编辑字典
-const editDict = (row) => {
-    dictForm.value.id = row.id;
-    dictForm.value.name = row.name;
-    dictForm.value.version = row.version;
-    dictDialogVisible.value = true;
-    dialogTitle.value = editButtonText.value + "字典";
+//编辑线路
+const editLine = (row) => {
+    lineForm.value.id = row.id;
+    lineForm.value.name = row.name;
+    lineForm.value.version = row.version;
+    lineDialogVisible.value = true;
+    dialogTitle.value = editButtonText.value + "线路";
 }
-//删除字典
-const deleteDict = (node, data) => {
+//删除线路
+const deleteLine = (node, data) => {
     ElMessageBox.confirm("确定删除吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
     }).then(() => {
         if (node.data && node.data.value != undefined) {
-            dictIDs.value = node.data.value;
+            lineIDs.value = node.data.value;
             treeChecked.value.push(node);
         }
-        if (dictIDs.value == "") {
+        if (lineIDs.value == "") {
             return
         }
-        dictAPI.delete(dictIDs.value).then((res) => {
+        lineAPI.delete(lineIDs.value).then((res) => {
             treeChecked.value.forEach(item => {
                 treeRef.value.remove(item);
             });
@@ -369,38 +370,38 @@ const deleteDict = (node, data) => {
     }).catch(() => { })
 }
 
-//新增字典数据
-const addDictChildren = () => {
+//新增线路数据
+const addLineChildren = () => {
     resetForm()
-    dictChildrenDialogVisible.value = true;
-    dialogTitle.value = "新建字典数据";
+    lineChildrenDialogVisible.value = true;
+    dialogTitle.value = "新建线路数据";
 }
-//编辑字典数据
-const editDictChildren = (row) => {
-    dictChildrenForm.value.id = row.id;
-    dictChildrenForm.value.dict.id = row.dict.id;
-    dictChildrenForm.value.label = row.label;
-    dictChildrenForm.value.value = row.value;
-    dictChildrenForm.value.version = row.version;
-    dictChildrenDialogVisible.value = true;
-    dialogTitle.value = editButtonText.value + "字典数据";
+//编辑线路数据
+const editLineChildren = (row) => {
+    lineChildrenForm.value.id = row.id;
+    lineChildrenForm.value.line.id = row.line.id;
+    lineChildrenForm.value.label = row.label;
+    lineChildrenForm.value.value = row.value;
+    lineChildrenForm.value.version = row.version;
+    lineChildrenDialogVisible.value = true;
+    dialogTitle.value = editButtonText.value + "线路数据";
 }
-//删除字典数据
-const deleteDictChildren = (row) => {
+//删除线路数据
+const deleteLineChildren = (row) => {
     ElMessageBox.confirm("确定要删除吗？", "提示", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
         type: "warning",
     }).then(() => {
         if (row.id != undefined) {
-            dictChildrenIDs.value = row.id;
+            lineChildrenIDs.value = row.id;
         }
-        if (dictChildrenIDs.value == "") {
+        if (lineChildrenIDs.value == "") {
             return
         }
-        dictChildrenAPI.delete(dictChildrenIDs.value).then((res) => {
+        lineChildrenAPI.delete(lineChildrenIDs.value).then((res) => {
             ElMessage.success("删除成功");
-            getDictChildrenList(row.dict.id);
+            getLineChildrenList(row.line.id);
         }).catch(() => {
             ElMessage.error("删除失败");
         });
@@ -413,33 +414,33 @@ const deleteDictChildren = (row) => {
 const submit = (type) => {
     submitButtonLoading.value = true;
     submitButtonText.value = "提交中";
-    if (type == "dict") {
-        dictFormRef.value.validate((valid) => {
+    if (type == "line") {
+        lineFormRef.value.validate((valid) => {
             if (valid) {
-                dictAPI.save(dictForm.value).then((res) => {
-                    if (dialogTitle.value == "编辑字典") {
-                        ElMessage.success("更新字典成功");
-                    } else if (dialogTitle.value == "新建字典") {
-                        ElMessage.success("新建字典成功");
+                lineAPI.save(lineForm.value).then((res) => {
+                    if (dialogTitle.value == "编辑线路") {
+                        ElMessage.success("更新线路成功");
+                    } else if (dialogTitle.value == "新建线路") {
+                        ElMessage.success("新建线路成功");
                     }
-                    dictDialogVisible.value = false;
-                    getDictList();
+                    lineDialogVisible.value = false;
+                    getLineList();
                 }).catch((error) => {
                     console.log(error);
                 })
             }
         })
-    } else if (type == "dictChildren") {
-        dictChildrenFormRef.value.validate((valid) => {
+    } else if (type == "lineChildren") {
+        lineChildrenFormRef.value.validate((valid) => {
             if (valid) {
-                dictChildrenAPI.save(dictChildrenForm.value).then((res) => {
-                    if (dialogTitle.value == "编辑字典数据") {
-                        ElMessage.success("更新字典数据成功");
-                    } else if (dialogTitle.value == "新建字典数据") {
-                        ElMessage.success("新建字典数据成功");
+                lineChildrenAPI.save(lineChildrenForm.value).then((res) => {
+                    if (dialogTitle.value == "编辑线路数据") {
+                        ElMessage.success("更新线路数据成功");
+                    } else if (dialogTitle.value == "新建线路数据") {
+                        ElMessage.success("新建线路数据成功");
                     }
-                    dictChildrenDialogVisible.value = false;
-                    getDictChildrenList(dictChildrenForm.value.dict.id);
+                    lineChildrenDialogVisible.value = false;
+                    getLineChildrenList(lineChildrenForm.value.line.id);
                 }).catch((error) => {
                     console.log(error);
                 })
@@ -450,58 +451,58 @@ const submit = (type) => {
     submitButtonText.value = "提交";
 }
 
-//获取字典列表
-const getDictList = () => {
-    dictLoading.value = true;
-    getDicts().then(() => {
-        treeData.value = store.dict;
-        dictLoading.value = false;
+//获取线路列表
+const getLineList = () => {
+    lineLoading.value = true;
+    getLines().then(() => {
+        treeData.value = store.line;
+        lineLoading.value = false;
     })
 };
 
-//获取字典数据列表
-const getDictChildrenList = (dictID) => {
-    dictChildrenLoading.value = true;
-    getDicts().then(() => {
-        treeData.value = store.dict;
-        dictChildrenLoading.value = false;
+//获取线路数据列表
+const getLineChildrenList = (lineID) => {
+    lineChildrenLoading.value = true;
+    getLines().then(() => {
+        treeData.value = store.line;
+        lineChildrenLoading.value = false;
         treeData.value.forEach((item) => {
-            if (item.value == dictID) {
-                tableData.value = item.dictChildren;
+            if (item.value == lineID) {
+                tableData.value = item.lineChildren;
             }
         })
         nextTick(() => {
-            treeRef.value.setCurrentKey(dictID)
+            treeRef.value.setCurrentKey(lineID)
         })
     })
 };
 
 //刷新表格
 const refreshTable = () => {
-    dictChildren.value.page.pageNo = 1;
+    lineChildren.value.page.pageNo = 1;
     pageNo.value = 1;
-    getDictChildrenList();
+    getLineChildrenList();
 };
 
 //处理每页大小变化
 const handleSizeChange = (value) => {
-    dict.value.page.pageSize = value;
+    line.value.page.pageSize = value;
     if (pageNo.value * value > total.value) {
         pageNo.value = Math.ceil(total.value / value);
-        dict.value.page.pageNo = pageNo.value;
+        line.value.page.pageNo = pageNo.value;
     }
-    getDictList();
+    getLineList();
 };
 //处理页码改变
 const handleCurrentChange = (value) => {
-    dict.value.page.pageNo = value;
-    getDictList();
+    line.value.page.pageNo = value;
+    getLineList();
 };
 
 //处理多选改变
 const handleSelectionChange = (value) => {
-    deleteDictButtonDisabled.value = value.length == 0;
-    dictChildrenIDs.value = value.map((item) => item.id).join(",");
+    deleteLineButtonDisabled.value = value.length == 0;
+    lineChildrenIDs.value = value.map((item) => item.id).join(",");
 }
 
 </script>
