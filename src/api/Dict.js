@@ -2,11 +2,10 @@ import request from "@/utils/Request";
 
 export default {
 	//获取字典列表
-	list(data) {
+	list() {
 		return request({
 			url: "/sys/dict/treeList",
 			method: "post",
-			data: data,
 		});
 	},
 

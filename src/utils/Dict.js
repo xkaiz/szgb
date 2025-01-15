@@ -5,18 +5,11 @@ import useStore from "@/store/index";
 import { ElMessage } from "element-plus";
 const store = useStore();
 
-const dict = ref({
-	page: {
-		pageNo: 1,
-		pageSize: 20,
-		orderBy: "",
-	},
-});
-
 export const getDicts = () => {
 	return dictAPI
-		.list(dict.value)
+		.list()
 		.then((res) => {
+			console.log(res.data.dictTree);
 			store.setDict(buildTree(res.data.dictTree));
 			console.log("字典加载成功");
 		})

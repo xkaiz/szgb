@@ -2,11 +2,10 @@ import request from "@/utils/Request";
 
 export default {
 	//获取线路列表
-	list(data) {
+	list() {
 		return request({
-			url: "/sys/line/list",
+			url: "/sys/line/treeList",
 			method: "post",
-			data: data,
 		});
 	},
 

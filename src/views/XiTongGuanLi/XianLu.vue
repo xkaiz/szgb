@@ -30,8 +30,8 @@
                 @selection-change="handleSelectionChange" row-key="id">
                 <el-table-column type="selection" header-align="center" align="center" />
                 <el-table-column prop="id" label="id" width="80" align="center" v-if="false" />
-                <el-table-column prop="label" label="键" align="center" width="150" />
-                <el-table-column prop="value" label="值" align="center" />
+                <el-table-column prop="line" label="线路" align="center" width="150" />
+                <el-table-column prop="name" label="站点" align="center" />
                 <el-table-column fixed="right" label="操作" width="120">
                     <template #default="scope">
                         <el-button link type="primary" size="small" @click="editLineChildren(scope.row)">
@@ -271,9 +271,7 @@ onMounted(() => {
         window.location.href = "/login?path=ZiDian";
         return
     }
-
-    treeData.value = store.line;
-    lineLoading.value = false;
+    getLineList();
     lineChildrenLoading.value = false
 });
 
@@ -282,7 +280,10 @@ const handleNodeClick = (data) => {
     addLineButtonDisabled.value = false
     store.line.map((item) => {
         if (item.value == data.value) {
-            tableData.value = item.lineChildren;
+            tableData.value = item.childrenData;
+            tableData.value.forEach((item) => {
+                item.line = data.label;
+            });
             lineChildrenForm.value.line.id = item.value
             refreshTableButtonDisabled.value = false
         }
@@ -455,7 +456,7 @@ const submit = (type) => {
 const getLineList = () => {
     lineLoading.value = true;
     getLines().then(() => {
-        treeData.value = store.line;
+        treeData.value = JSON.parse(JSON.stringify(store.line));
         lineLoading.value = false;
     })
 };
@@ -464,11 +465,10 @@ const getLineList = () => {
 const getLineChildrenList = (lineID) => {
     lineChildrenLoading.value = true;
     getLines().then(() => {
-        treeData.value = store.line;
         lineChildrenLoading.value = false;
-        treeData.value.forEach((item) => {
+        store.line.forEach((item) => {
             if (item.value == lineID) {
-                tableData.value = item.lineChildren;
+                tableData.value = item.childrenData;
             }
         })
         nextTick(() => {

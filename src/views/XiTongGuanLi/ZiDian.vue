@@ -270,7 +270,7 @@ onMounted(() => {
         window.location.href = "/login?path=ZiDian";
         return
     }
-
+    getDictList();
     treeData.value = store.dict;
     dictLoading.value = false;
     dictChildrenLoading.value = false
@@ -281,7 +281,8 @@ const handleNodeClick = (data) => {
     addDictButtonDisabled.value = false
     store.dict.map((item) => {
         if (item.value == data.value) {
-            tableData.value = item.dictChildren;
+            tableData.value = item.childrenData;
+            console.log(tableData.value);
             dictChildrenForm.value.dict.id = item.value
             refreshTableButtonDisabled.value = false
         }
@@ -454,7 +455,7 @@ const submit = (type) => {
 const getDictList = () => {
     dictLoading.value = true;
     getDicts().then(() => {
-        treeData.value = store.dict;
+        treeData.value = JSON.parse(JSON.stringify(store.dict));
         dictLoading.value = false;
     })
 };
@@ -463,11 +464,10 @@ const getDictList = () => {
 const getDictChildrenList = (dictID) => {
     dictChildrenLoading.value = true;
     getDicts().then(() => {
-        treeData.value = store.dict;
         dictChildrenLoading.value = false;
         treeData.value.forEach((item) => {
             if (item.value == dictID) {
-                tableData.value = item.dictChildren;
+                tableData.value = item.childrenData;
             }
         })
         nextTick(() => {
