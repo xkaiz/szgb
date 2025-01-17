@@ -9,7 +9,6 @@ export const getDicts = () => {
 	return dictAPI
 		.list()
 		.then((res) => {
-			console.log(res.data.dictTree);
 			store.setDict(buildTree(res.data.dictTree));
 			console.log("字典加载成功");
 		})

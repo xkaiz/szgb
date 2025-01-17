@@ -524,7 +524,7 @@ const scheduleType = ref([])
 onMounted(() => {
     const token = cookies.get("token");
     if (token == null || token == "") {
-        window.location.href = "/login?path=JiHua";
+        window.location.href = "/login?path=BanCi";
         return
     }
     initDictSelectOptions()
@@ -641,8 +641,8 @@ const deleteSchedulePlan = (row) => {
 }
 
 const initDictSelectOptions = () => {
-    taskType.value = store.dict.find(item => item.label == "任务类型").dictChildren
-    scheduleType.value = store.dict.find(item => item.label == "班次类型").dictChildren
+    taskType.value = store.dict.find(item => item.label == "任务类型").childrenData;
+    scheduleType.value = store.dict.find(item => item.label == "班次类型").childrenData
 }
 
 /**
@@ -751,12 +751,13 @@ const getSchedulePlanList = (scheduleID) => {
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
         subTableData.value.forEach(element => {
-            element.leader = element.schedulePeopleList.find(item => item.type == "0");
-            element.leaderName = element.schedulePeopleList.find(item => item.type == "0").user.name;
-            element.leaderId = element.schedulePeopleList.find(item => item.type == "0").user.id;
-            element.member = element.schedulePeopleList.filter(item => item.type == "1");
-            element.memberNames = element.member.map(item => item.user.name).join("、");
-            element.memberIds = element.member.map(item => item.user.id)
+            console.log(element);
+            element.leader = element.responsiblePerson;
+            element.leaderName = element.responsiblePerson.name;
+            element.leaderId = element.responsiblePerson.id;
+            // element.member = element.schedulePeopleList.filter(item => item.type == "1");
+            // element.memberNames = element.member.map(item => item.user.name).join("、");
+            // element.memberIds = element.member.map(item => item.user.id)
             element.startAt = formatDate(element.startAt, 1);
             element.endAt = formatDate(element.endAt, 1);
         });
@@ -782,7 +783,6 @@ const getSchedulePlanList = (scheduleID) => {
 
 
 const refreshScheduleTable = () => {
-    console.log(scheduleForm.value);
     scheduleForm.value.page.pageNo = 1;
     pageNo.value = 1;
     getScheduleList();

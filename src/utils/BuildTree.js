@@ -10,7 +10,6 @@ export const buildTree = (data) => {
 	const map = {};
 	// 创建一个数组，用于存储最终构建好的树的根节点
 	const tree = [];
-	console.log(data);
 	// 第一次遍历数据，为每个节点在map中创建一个映射
 	data.forEach((item) => {
 		// 在map中以节点的id为键，存储一个对象，包括该节点的标签和一个空的子节点数组

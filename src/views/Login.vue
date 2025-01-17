@@ -31,6 +31,7 @@ import userAPI from "@/api/User";
 import userRoleAPI from "@/api/UserRole";
 import { permission } from "@/utils/Permission";
 import { getDicts } from "@/utils/Dict";
+import { getDepartments } from "@/utils/Department";
 const loginForm = ref({
     username: "admin",
     password: "123456",
@@ -57,7 +58,7 @@ const path = ref("home");
 onMounted(() => {
     const url = new URL(window.location.href);
     path.value = url.searchParams.get('path') == null ? "home" : url.searchParams.get('path');
-    localStorage.setItem("activeMenu", "/home");
+    localStorage.setItem("activeMenu", "/" + path.value);
     autoLogin();
 });
 
@@ -101,7 +102,8 @@ const initData = (user) => {
             store.setUser(user);
             permission()
         }),
-        getDicts()
+        getDicts(),
+        getDepartments()
     ]).then(() => {
         router.push("/" + path.value);
     }).catch((error) => {

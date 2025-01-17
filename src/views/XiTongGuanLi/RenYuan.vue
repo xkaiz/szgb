@@ -323,17 +323,11 @@ onMounted(() => {
         window.location.href = "/login?path=RenYuan";
         return
     }
-    Promise.all([
-        userAPI.list(user.value).then((res) => {
-            res.data.page.list.count = res.data.page.count;
-            store.setUserList(res.data.page.list);
-            userLoading.value = false;
-        }),
-        departmentAPI.list(department.value).then((res) => {
-            store.setDepartmentList(buildTree(res.data.page.list));
-            departmentLoading.value = false;
-        }),
-    ]).then(() => {
+    userAPI.list(user.value).then((res) => {
+        res.data.page.list.count = res.data.page.count;
+        store.setUserList(res.data.page.list);
+    }).then(() => {
+        userLoading.value = false;
         total.value = store.userList.count;
         tableData.value = store.userList;
         treeData.value = store.departmentList;
