@@ -328,6 +328,7 @@ onMounted(() => {
         store.setUserList(res.data.page.list);
     }).then(() => {
         userLoading.value = false;
+        departmentLoading.value = false;
         total.value = store.userList.count;
         tableData.value = store.userList;
         treeData.value = store.departmentList;

@@ -37,7 +37,7 @@ const getDictList = () => {
     loading.value = true;
     propsDict.value.cname = props.dict.split("/")[0];
     propsDict.value.name = props.dict.split("/")[1];
-    options.value = store.dict.find(item => item.label == propsDict.value.cname).dictChildren;
+    options.value = store.dict.find(item => item.label == propsDict.value.cname).childrenData;
     if (props.form[propsDict.value.name] != "") {
         dictSelect.value = options.value.find(item => item.label == props.form[propsDict.value.name]).label
     }

@@ -32,14 +32,14 @@ const user = ref({
 onMounted(() => {
     if (props.form != undefined && props.form.id != "") {
         if (props.userType == 'leader') {
-            userSelect.value = props.form.leader.user.name;
-            userSelectId.value = props.form.leader.user.id;
+            userSelect.value = props.form.leader.name;
+            userSelectId.value = props.form.leader.id;
         } else if (props.userType == 'member') {
             userSelect.value = []
             userSelectId.value = []
-            props.form.member.forEach(element => {
-                userSelect.value.push(element.user.name);
-                userSelectId.value.push(element.user.id);
+            props.form.groupMember.forEach(element => {
+                userSelect.value.push(element.name);
+                userSelectId.value.push(element.id);
             });
         }
 
@@ -67,16 +67,6 @@ const getList = () => {
 };
 
 const handelChange = (data) => {
-    // let tempData = JSON.parse(JSON.stringify(data));
-    // props.form.member.forEach((element, index) => {
-    //     for (let i = 0; i < tempData.length; i++) {
-    //         if (element.user.name == tempData[i]) {
-    //             tempData[i] = element.user.id;
-    //             break;
-    //         }
-    //     }
-    // });
-    // data = tempData;
     userSelectId.value = data;
     emit("model", { type: "user", value: data, userType: props.userType == 'leader' ? 0 : 1, id: props.form.id, version: props.form.version });
 };

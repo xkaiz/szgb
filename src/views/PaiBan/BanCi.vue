@@ -240,27 +240,6 @@
                     <el-col :span="12">
                         <el-form-item label="任务名称" prop="taskName">
                             <el-input v-model="schedulePlanForm.taskName" placeholder="请输入" />
-                            <!-- <el-select v-model="schedulePlanForm.taskName" filterable allow-create default-first-option
-                                :disabled="roleLevelBoolean">
-                                <template #footer>
-                                    <el-button v-if="!isTemplateAdding" text bg size="small"
-                                        @click="onAddTemplateOption">
-                                        添加模板
-                                    </el-button>
-                                    <template v-else>
-                                        <div style="width: 100%;">
-                                            <el-input v-model="templateOption" class="template-input"
-                                                placeholder="输入模板内容" type="textarea" size="small" autosize />
-                                        </div>
-
-                                        <el-button type="primary" size="small" @click="onTemplateConfirm(5)">
-                                            添加
-                                        </el-button>
-                                        <el-button size="small" @click="isTemplateAdding = false">取消</el-button>
-
-                                    </template>
-                                </template>
-                            </el-select> -->
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -275,8 +254,8 @@
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="班次类型" prop="scheduleType" filterable default-first-option>
-                            <DictSelect @model="setModel" :form="schedulePlanForm" dict="班次类型/scheduleType">
-                            </DictSelect>
+                            <!-- <DictSelect @model="setModel" :form="schedulePlanForm" dict="班次类型/scheduleType">
+                            </DictSelect> -->
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -492,7 +471,6 @@ const initialSchedulePlanForm = {
     member: [],
     memberNames: "",
     memberIds: [],
-    memberData: [],
     taskType: "",
     taskName: "",
     location: "",
@@ -598,23 +576,21 @@ const addSchedulePlan = () => {
 const editSchedulePlan = (row) => {
     drawerTitle.value = "编辑计划";
     schedulePlanForm.value = JSON.parse(JSON.stringify(row));
-    schedulePlanForm.value.memberData = []
-    schedulePlanForm.value.schedulePeopleList.forEach((item) => {
-        if (item.type == "0") {
-            schedulePlanForm.value.leaderData = {
-                id: item.id,
-                version: item.version,
-            };
-        } else if (item.type == "1") {
-            schedulePlanForm.value.memberData.push({
-                id: item.id,
-                version: item.version,
-            });
+    // schedulePlanForm.value.schedulePeopleList.forEach((item) => {
+    //     if (item.type == "0") {
+    //         schedulePlanForm.value.leaderData = {
+    //             id: item.id,
+    //             version: item.version,
+    //         };
+    //     } else if (item.type == "1") {
+    //         schedulePlanForm.value.memberData.push({
+    //             id: item.id,
+    //             version: item.version,
+    //         });
 
-        }
-    });
-    schedulePlanForm.value.schedulePeopleList = []
-    console.log(schedulePlanForm.value.memberData);
+    //     }
+    // });
+    // schedulePlanForm.value.schedulePeopleList = []
     drawerVisible.value = true;
 }
 
@@ -665,37 +641,6 @@ const submit = (type) => {
         });
     } else if (type == 2) {
         if (drawerTitle.value == "编辑计划") {
-            schedulePlanForm.value.schedulePeopleList.push({
-                id: schedulePlanForm.value.leaderData.id,
-                user: {
-                    "id": schedulePlanForm.value.leaderId,
-                },
-                type: 0,
-                version: schedulePlanForm.value.leaderData.version
-            });
-            if (schedulePlanForm.value.memberData.length > schedulePlanForm.value.memberIds.length) {
-                schedulePlanForm.value.memberData = schedulePlanForm.value.memberData.slice(0, schedulePlanForm.value.memberIds.length);
-            }
-            schedulePlanForm.value.memberIds.forEach((item, index) => {
-                if (index < schedulePlanForm.value.memberData.length) {
-                    schedulePlanForm.value.schedulePeopleList.push({
-                        id: schedulePlanForm.value.memberData[index].id,
-                        user: {
-                            "id": item,
-                        },
-                        type: 1,
-                        version: schedulePlanForm.value.memberData[index].version
-                    })
-                } else {
-                    schedulePlanForm.value.schedulePeopleList.push({
-                        id: "",
-                        user: {
-                            "id": item,
-                        },
-                        type: 1,
-                    })
-                }
-            });
             schedulePlanForm.value.taskType = Number(taskType.value.find(item => item.label == schedulePlanForm.value.taskType).value);
             schedulePlanForm.value.scheduleType = Number(scheduleType.value.find(item => item.label == schedulePlanForm.value.scheduleType).value);
             const nextDate = new Date(scheduleForm.value.date);
@@ -755,9 +700,7 @@ const getSchedulePlanList = (scheduleID) => {
             element.leader = element.responsiblePerson;
             element.leaderName = element.responsiblePerson.name;
             element.leaderId = element.responsiblePerson.id;
-            // element.member = element.schedulePeopleList.filter(item => item.type == "1");
-            // element.memberNames = element.member.map(item => item.user.name).join("、");
-            // element.memberIds = element.member.map(item => item.user.id)
+            element.memberNames = element.groupMember.map(item => item.name).join("、");
             element.startAt = formatDate(element.startAt, 1);
             element.endAt = formatDate(element.endAt, 1);
         });
