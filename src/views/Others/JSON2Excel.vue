@@ -2,19 +2,10 @@
     <div id="app">
         <h1>JSON2Excel</h1>
         <input type="file" @change="handleFileUpload" accept=".txt" multiple />
-
-        <label>
-            <input type="radio" value="multipleChoice" v-model="questionType" />
-            选项型
-        </label>
-        <label>
-            <input type="radio" value="openEnded" v-model="questionType" />
-            问答型
-        </label>
-
         <el-button @click="convertToExcel">转换为Excel</el-button>
     </div>
 </template>
+
 <script>
 import * as XLSX from 'xlsx';
 
@@ -22,15 +13,14 @@ export default {
     name: 'App',
     data() {
         return {
-            jsonData: [],
-            questionType: 'multipleChoice' // Default selection
+            jsonData: []
         };
     },
     methods: {
         handleFileUpload(event) {
             const files = event.target.files;
             if (!files.length) {
-                alert('Please select some TXT files.');
+                alert('请上传一些 TXT 文件。');
                 return;
             }
 
@@ -41,11 +31,11 @@ export default {
                         try {
                             const data = JSON.parse(e.target.result).data.rows;
                             if (!Array.isArray(data)) {
-                                throw new Error('JSON data is not an array.');
+                                throw new Error('JSON 数据不是一个数组。');
                             }
                             resolve(data);
                         } catch (error) {
-                            reject('Error reading JSON from file ' + file.name + ': ' + error.message);
+                            reject('读取文件 ' + file.name + ' 的 JSON 时出错: ' + error.message);
                         }
                     };
                     reader.readAsText(file);
@@ -67,30 +57,36 @@ export default {
             }
 
             const extractedData = this.jsonData.map(item => {
-                // Get correct answers with corresponding option labels
                 const options = item.enterExamQuestionOptionVOList.map((option, index) => {
                     return { label: String.fromCharCode(65 + index), value: option.questionOptionValue, isCorrect: option.rightAnswer === 1 };
                 });
 
-                const correctAnswers = options.filter(option => option.isCorrect).map(option => option.label).join(''); // No separator
+                // 判断是否为判断题
+                const isTrueFalse = options.length === 2 && options.every(option =>
+                    ["错误", "正确", "对", "错"].includes(option.value)
+                );
 
-                if (this.questionType === 'multipleChoice') {
-                    // Format for multiple choice
-                    const optionValues = options.map(option => option.value).slice(0, 5); // Ensure only A-E
-                    return [item.questionName, correctAnswers || '无', '', ...optionValues];
+                let correctAnswers;
+
+                if (isTrueFalse) {
+                    const correctOption = options.find(option => option.isCorrect);
+                    correctAnswers = correctOption ? correctOption.label : '无';
                 } else {
-                    // Format for open-ended: only include the answer
-                    const answer = options.find(option => option.isCorrect)?.value || '无'; // Get the correct answer or '无'
-                    return [item.questionName, answer];
+                    correctAnswers = options.filter(option => option.isCorrect).map(option => option.label).join('');
                 }
+
+                const optionValues = options.map(option => option.value);
+
+                // 增加 questionAnalysis 数据
+                const questionAnalysis = item.questionAnalysis || '无';
+
+                return [item.questionName, correctAnswers || '无', questionAnalysis, ...optionValues];
             });
 
-            // Create worksheet with the extracted data
             const worksheet = XLSX.utils.aoa_to_sheet(extractedData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Questions');
 
-            // Generate Excel file
             XLSX.writeFile(workbook, 'output.xlsx');
         }
     }

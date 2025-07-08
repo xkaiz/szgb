@@ -8,7 +8,7 @@ const store = useStore();
 const department = ref({
 	page: {
 		pageNo: 1,
-		pageSize: 20,
+		pageSize: 19940824,
 		orderBy: "",
 	},
 });

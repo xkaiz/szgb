@@ -1,27 +1,28 @@
 import request from "@/utils/Request";
 
 export default {
-	//获取字典列表
-	list() {
+	//获取班次类型列表
+	list(data) {
 		return request({
-			url: "/sys/dict/list",
-			method: "post",
-		});
-	},
-
-	//更新字典
-	save(data) {
-		return request({
-			url: "/sys/dict/save",
+			url: "/schedule/plan/type/list",
 			method: "post",
 			data: data,
 		});
 	},
 
-	//删除字典
+	//更新班次类型
+	save(data) {
+		return request({
+			url: "/schedule/plan/type/save",
+			method: "post",
+			data: data,
+		});
+	},
+
+	//删除班次类型
 	delete(ids) {
 		return request({
-			url: "/sys/dict/delete",
+			url: "/schedule/plan/type/delete",
 			method: "delete",
 			params: { ids: ids },
 		});

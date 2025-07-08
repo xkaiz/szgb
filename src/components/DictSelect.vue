@@ -24,14 +24,6 @@ onMounted(() => {
     getDictList();
 });
 
-const dict = ref({
-    page: {
-        pageNo: 1,
-        pageSize: 20,
-        orderBy: ""
-    }
-});
-
 const options = ref([]);
 const getDictList = () => {
     loading.value = true;

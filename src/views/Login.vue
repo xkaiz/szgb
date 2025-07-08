@@ -32,6 +32,7 @@ import userRoleAPI from "@/api/UserRole";
 import { permission } from "@/utils/Permission";
 import { getDicts } from "@/utils/Dict";
 import { getDepartments } from "@/utils/Department";
+import { getSchedulePlanType } from "@/utils/SchedulePlanType";
 const loginForm = ref({
     username: "admin",
     password: "123456",
@@ -103,7 +104,8 @@ const initData = (user) => {
             permission()
         }),
         getDicts(),
-        getDepartments()
+        getDepartments(),
+        getSchedulePlanType()
     ]).then(() => {
         router.push("/" + path.value);
     }).catch((error) => {

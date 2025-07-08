@@ -9,7 +9,7 @@ export const getDicts = () => {
 	return dictAPI
 		.list()
 		.then((res) => {
-			store.setDict(buildTree(res.data.dictTree));
+			store.setDict(buildTree(res.data.page.list));
 			console.log("字典加载成功");
 		})
 		.catch((err) => {

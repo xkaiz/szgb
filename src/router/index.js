@@ -5,7 +5,7 @@ import Layout from "@/layout/index.vue";
 const routes = [
 	{
 		path: "/",
-		redirect: "/login",
+		redirect: "/home",
 	},
 	{
 		path: "/login",

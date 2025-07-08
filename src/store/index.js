@@ -16,6 +16,7 @@ const useStore = defineStore(
 		const line = ref([]);
 		const schedule = ref({});
 		const schedulePlan = ref({});
+		const schedulePlanType = ref({});
 
 		const setUser = (data) => {
 			user.value = data;
@@ -65,6 +66,10 @@ const useStore = defineStore(
 			schedulePlan.value = data;
 		};
 
+		const setSchedulePlanType = (data) => {
+			schedulePlanType.value = data;
+		};
+
 		const logout = () => {
 			user.value = {};
 		};
@@ -94,6 +99,8 @@ const useStore = defineStore(
 			setSchedule,
 			schedulePlan,
 			setSchedulePlan,
+			schedulePlanType,
+			setSchedulePlanType,
 			logout,
 		};
 	},

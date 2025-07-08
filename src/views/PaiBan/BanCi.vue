@@ -254,8 +254,8 @@
                     </el-col>
                     <el-col :span="12">
                         <el-form-item label="班次类型" prop="scheduleType" filterable default-first-option>
-                            <!-- <DictSelect @model="setModel" :form="schedulePlanForm" dict="班次类型/scheduleType">
-                            </DictSelect> -->
+                            <SchedulePlanTypeSelect @model="setModel" :form="schedulePlanForm" dict="班次类型/scheduleType">
+                            </SchedulePlanTypeSelect>
                         </el-form-item>
                     </el-col>
                 </el-row>
@@ -321,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, version } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useCookies } from "vue3-cookies";
 const { cookies } = useCookies();
 import useStore from "@/store/index";
@@ -330,16 +330,14 @@ const store = useStore();
 import scheduleAPI from "@/api/Schedule";
 import schedulePlanAPI from "@/api/SchedulePlan";
 import exportAPI from "@/api/Export";
-import dictChildrenAPI from "@/api/DictChildren";
 
 import { ElMessage, ElMessageBox } from "element-plus";
 import DictSelect from "@/components/DictSelect.vue";
 import DepartmentSelect from "@/components/DepartmentSelect.vue"
 import UserSelect from "@/components/UserSelect.vue";
+import SchedulePlanTypeSelect from "@/components/SchedulePlanTypeSelect.vue";
 import { formatDate } from "@/utils/Format";
-import { getDicts } from "@/utils/Dict";
 
-const userSelectRef = ref(null);
 const departmentSelectRef = ref(null);
 
 const tableData = ref([]);
@@ -463,7 +461,6 @@ const initialSchedulePlanForm = {
     schedule: {
         id: "",
     },
-    schedulePeopleList: [],
     leader: "",
     leaderName: "",
     leaderId: "",
@@ -576,6 +573,7 @@ const addSchedulePlan = () => {
 const editSchedulePlan = (row) => {
     drawerTitle.value = "编辑计划";
     schedulePlanForm.value = JSON.parse(JSON.stringify(row));
+    console.log(schedulePlanForm.value);
     // schedulePlanForm.value.schedulePeopleList.forEach((item) => {
     //     if (item.type == "0") {
     //         schedulePlanForm.value.leaderData = {
@@ -618,7 +616,7 @@ const deleteSchedulePlan = (row) => {
 
 const initDictSelectOptions = () => {
     taskType.value = store.dict.find(item => item.label == "任务类型").childrenData;
-    scheduleType.value = store.dict.find(item => item.label == "班次类型").childrenData
+    scheduleType.value = store.schedulePlanType
 }
 
 /**
@@ -691,12 +689,11 @@ const getSchedulePlanList = (scheduleID) => {
     schedulePlanAPI.list(schedulePlanForm.value).then((res) => {
         res.data.page.list.forEach((item) => {
             item.taskType = taskType.value.find(item1 => item1.value == item.taskType).label;
-            item.scheduleType = scheduleType.value.find(item1 => item1.value == item.scheduleType).label;
+            item.scheduleType = scheduleType.value.find(item1 => item1.id == item.scheduleType).label;
         });
         store.setSchedulePlan(res.data.page.list);
         subTableData.value = res.data.page.list;
         subTableData.value.forEach(element => {
-            console.log(element);
             element.leader = element.responsiblePerson;
             element.leaderName = element.responsiblePerson.name;
             element.leaderId = element.responsiblePerson.id;
